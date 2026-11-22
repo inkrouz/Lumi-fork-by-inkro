@@ -1,4 +1,4 @@
-package cn.nukkit.level.format.leveldb;
+package cn.nukkit.level.format.leveldb
 
 import org.cloudburstmc.nbt.NbtMap;
 import org.junit.jupiter.api.Test;
