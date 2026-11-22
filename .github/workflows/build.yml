@@ -9,6 +9,10 @@ on:
     branches:
       - stable
       - dev
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -49,9 +53,47 @@ jobs:
           REF_NAME="${{ github.head_ref || github.ref_name }}"
           SAFE_REF_NAME="${REF_NAME//\//-}"
           echo "name=lumi-$SAFE_REF_NAME" >> $GITHUB_OUTPUT
+          echo "safe=$SAFE_REF_NAME" >> $GITHUB_OUTPUT
+
+      - name: Pack ZIP files
+        run: |
+          mkdir -p out
+
+          # 1) ZIP с исходниками (без .git, build и кэшей)
+          zip -r out/lumi-source.zip . \
+            -x ".git/*" \
+            -x "*/.git/*" \
+            -x ".gradle/*" \
+            -x "*/.gradle/*" \
+            -x "build/*" \
+            -x "*/build/*" \
+            -x "out/*" \
+            -x ".idea/*"
+
+          # 2) ZIP с собранными jar-файлами
+          mkdir -p jars
+          find . -path "./out" -prune -o -path "*/build/libs/*.jar" -print -exec cp {} jars/ \;
+          zip -j out/lumi-build.zip jars/*.jar
+
+          # 3) Отдельно сами jar
+          cp jars/*.jar out/
+
+          ls -lh out
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_name.outputs.name }}
-          path: '**/build/libs/*.jar'
+          path: out/*
+
+      - name: Publish to Releases
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ steps.artifact_name.outputs.safe }}"
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" out/* \
+            --target "${{ github.sha }}" \
+            --title "Build (${{ steps.artifact_name.outputs.safe }})" \
+            --notes "Автосборка из коммита ${{ github.sha }}. lumi-source.zip — исходники, lumi-build.zip и .jar — сборка."
