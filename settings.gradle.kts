@@ -1,1 +1,1 @@
-rootProject.name = "Lumi"
+rootProject.name = "Raze-MOT"
