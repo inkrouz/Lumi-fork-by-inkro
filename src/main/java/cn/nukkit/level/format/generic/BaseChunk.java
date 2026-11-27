@@ -269,6 +269,8 @@ public abstract class BaseChunk extends BaseFullChunk implements Chunk {
         int minY = this.getProvider().getMinBlockY();
         int maxY = this.getProvider().getMaxBlockY();
         int sectionOffset = this.getSectionOffset();
+        int lowestSource = Integer.MAX_VALUE;
+        int highestSource = Integer.MIN_VALUE;
 
         for (int sectionY = 0; sectionY < this.sections.length; sectionY++) {
             ChunkSection section = this.sections[sectionY];
@@ -281,6 +283,8 @@ public abstract class BaseChunk extends BaseFullChunk implements Chunk {
             }
 
             int baseY = (sectionY - sectionOffset) << 4;
+            lowestSource = Math.min(lowestSource, baseY);
+            highestSource = Math.max(highestSource, baseY + 15);
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     for (int y = 0; y < 16; y++) {
@@ -298,12 +302,22 @@ public abstract class BaseChunk extends BaseFullChunk implements Chunk {
             }
         }
 
-        int size = (maxY - minY + 1) << 8;
+        if (lowestSource > highestSource) {
+            return; // No light sources: nothing to spread.
+        }
+
+        // Light travels at most 15 blocks, so the rest of the column cannot change.
+        int fromY = Math.max(minY, lowestSource - 15);
+        int toY = Math.min(maxY, highestSource + 15);
+        if (fromY > toY) {
+            return;
+        }
+        int size = (toY - fromY + 1) << 8;
         byte[] light = new byte[size];
         byte[] filter = new byte[size];
         boolean hasLight = false;
         for (int i = 0; i < size; i++) {
-            int level = this.getBlockLight(i & 15, minY + (i >> 8), (i >> 4) & 15);
+            int level = this.getBlockLight(i & 15, fromY + (i >> 8), (i >> 4) & 15);
             light[i] = (byte) level;
             hasLight |= level > 1;
         }
@@ -311,14 +325,14 @@ public abstract class BaseChunk extends BaseFullChunk implements Chunk {
             return;
         }
         for (int i = 0; i < size; i++) {
-            int blockId = this.getBlockId(i & 15, minY + (i >> 8), (i >> 4) & 15);
+            int blockId = this.getBlockId(i & 15, fromY + (i >> 8), (i >> 4) & 15);
             filter[i] = (byte) Math.min(15, Registries.BLOCK.getLightFilter(blockId));
         }
         byte[] before = light.clone();
         NativeLight.flood(light, filter);
         for (int i = 0; i < size; i++) {
             if (light[i] != before[i]) {
-                this.setBlockLight(i & 15, minY + (i >> 8), (i >> 4) & 15, light[i]);
+                this.setBlockLight(i & 15, fromY + (i >> 8), (i >> 4) & 15, light[i]);
             }
         }
     }
