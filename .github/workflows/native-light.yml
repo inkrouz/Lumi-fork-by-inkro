@@ -21,7 +21,18 @@ jobs:
           mkdir -p src/main/resources/native/linux-x64
           g++ -O3 -std=c++17 -shared -fPIC -static-libstdc++ -static-libgcc -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" native/light.cpp -o src/main/resources/native/linux-x64/liblumilight.so
       - name: Palette test and benchmark
-        run: chmod +x gradlew && ./gradlew test --tests cn.nukkit.level.util.PaletteRemapTest --info | tee test.log; test ${PIPESTATUS[0]} -eq 0
+        run: |
+          chmod +x gradlew
+          set +e
+          ./gradlew test --tests cn.nukkit.level.util.PaletteRemapTest --info > test.log 2>&1
+          code=$?
+          grep -o 'BENCH.*' test.log | tr '\n' ';' | sed 's/^/::notice title=bench::/'
+          echo
+          if [ $code -ne 0 ]; then
+            grep -E -A4 'error:|FAILED|went wrong|Exception:' test.log | head -40 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | sed 's/^/::error title=testlog::/'
+            echo
+          fi
+          exit $code
         shell: bash
       - name: Build jar
         run: chmod +x gradlew && ./gradlew shadowJar
