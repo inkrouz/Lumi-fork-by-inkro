@@ -176,6 +176,16 @@ public class PalettedBlockStorage {
         this.bitArray = newBitArray;
     }
 
+    /** Returns the palette index of a runtime ID, adding it (and growing storage) if needed. */
+    public int paletteIndex(int runtimeId) {
+        return this.idFor(runtimeId);
+    }
+
+    /** Writes an index previously returned by {@link #paletteIndex(int)}. */
+    public void setPaletteIndex(int index, int paletteIndex) {
+        this.bitArray.set(index, paletteIndex);
+    }
+
     private int idFor(int runtimeId) {
         int index = this.palette.indexOf(runtimeId);
         if (index != -1) {

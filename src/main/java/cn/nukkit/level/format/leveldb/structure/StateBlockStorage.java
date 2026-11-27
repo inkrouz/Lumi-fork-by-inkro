@@ -259,9 +259,17 @@ public class StateBlockStorage {
                     palettedBlockStorage.setBlock(i, blockPalette.getHashId(id, meta));
                 }
             } else {
+                // Resolve each source palette entry once; 0 means "not resolved yet".
+                final int[] remap = new int[this.palette.size()];
                 for (int i = 0; i < SECTION_SIZE; i++) {
-                    final int fullId = get(i);
-                    palettedBlockStorage.setBlock(i, blockPalette.getHashId(fullId >> Block.DATA_BITS, fullId & Block.DATA_MASK));
+                    final int source = this.bitArray.get(i);
+                    int target = remap[source] - 1;
+                    if (target < 0) {
+                        final int fullId = get(i);
+                        target = palettedBlockStorage.paletteIndex(blockPalette.getHashId(fullId >> Block.DATA_BITS, fullId & Block.DATA_MASK));
+                        remap[source] = target + 1;
+                    }
+                    palettedBlockStorage.setPaletteIndex(i, target);
                 }
             }
         }

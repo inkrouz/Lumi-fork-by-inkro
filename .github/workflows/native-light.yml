@@ -20,6 +20,9 @@ jobs:
         run: |
           mkdir -p src/main/resources/native/linux-x64
           g++ -O3 -std=c++17 -shared -fPIC -static-libstdc++ -static-libgcc -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" native/light.cpp -o src/main/resources/native/linux-x64/liblumilight.so
+      - name: Palette test and benchmark
+        run: chmod +x gradlew && ./gradlew test --tests cn.nukkit.level.util.PaletteRemapTest --info | tee test.log; test ${PIPESTATUS[0]} -eq 0
+        shell: bash
       - name: Build jar
         run: chmod +x gradlew && ./gradlew shadowJar
       - uses: actions/upload-artifact@v4
