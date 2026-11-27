@@ -235,6 +235,16 @@ public class InventoryTransaction {
     }
 
     public boolean execute() {
+        for (InventoryAction action : this.actions) {
+            if (action instanceof SlotChangeAction click && click.getInventory() instanceof cn.nukkit.item.enchantment.book.AnvilMenu menu) {
+                this.sendInventories();
+                this.source.getCursorInventory().sendContents(this.source);
+                if (click.getSourceItem().getId() != Item.AIR) {
+                    menu.click(this.source, click.getSlot());
+                }
+                return false;
+            }
+        }
         if (this.hasExecuted() || !this.canExecute()) {
             this.sendInventories();
             return false;

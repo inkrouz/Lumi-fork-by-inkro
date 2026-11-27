@@ -2,14 +2,11 @@ package cn.nukkit.item.enchantment.book;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
-import cn.nukkit.block.Block;
-import cn.nukkit.form.element.ElementButton;
-import cn.nukkit.form.window.FormWindowSimple;
-import cn.nukkit.inventory.AnvilInventory;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.item.enchantment.EnchantmentRarity;
 import cn.nukkit.item.enchantment.EnchantmentType;
+import cn.nukkit.level.Position;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.registry.Registries;
 import cn.nukkit.utils.Config;
@@ -126,7 +123,10 @@ public final class CustomBooks {
         item.setNamedTag(tag);
     }
 
-    private record Option(int slot, Item book, Definition definition, int result) {
+    record Option(int slot, Item book, Definition definition, int result) {
+        String title() {
+            return definition.name() + " §r" + Enchantment.getLevelString(result) + "\n§7Цена: " + definition.cost() + " ур.";
+        }
     }
 
     /** Every book in the inventory that would upgrade the item. */
@@ -147,7 +147,7 @@ public final class CustomBooks {
         return options;
     }
 
-    private static void apply(Player player, Option option) {
+    static void apply(Player player, Option option) {
         Item held = player.getInventory().getItemInHand();
         Definition d = option.definition();
         if (!player.isCreative()) {
@@ -173,42 +173,9 @@ public final class CustomBooks {
     }
 
     /** @return false if there is nothing to offer, so the normal anvil should open. */
-    public static boolean openMenu(Player player, Block anvil) {
+    public static boolean openMenu(Player player, Position anvil) {
         Item held = player.getInventory().getItemInHand().clone();
-        int heldSlot = player.getInventory().getHeldItemIndex();
         List<Option> options = options(player, held);
-        if (options.isEmpty()) return false;
-
-        FormWindowSimple form = new FormWindowSimple("Наковальня", "Выбери книгу для предмета в руке");
-        for (Option option : options) {
-            Definition d = option.definition();
-            form.addButton(new ElementButton(d.name() + " §r" + Enchantment.getLevelString(option.result())
-                    + "\nЦена: " + d.cost() + " ур."));
-        }
-        form.addButton(new ElementButton("Обычная наковальня"));
-        form.addHandler((who, formId) -> {
-            if (form.wasClosed() || form.getResponse() == null) return;
-            if (who.getLevel() != anvil.getLevel() || who.distanceSquared(anvil) > 49
-                    || anvil.getLevel().getBlockIdAt(anvil.getFloorX(), anvil.getFloorY(), anvil.getFloorZ()) != Block.ANVIL) {
-                return;
-            }
-            int clicked = form.getResponse().getClickedButtonId();
-            if (clicked == options.size()) {
-                who.addWindow(new AnvilInventory(who.getUIInventory(), anvil), Player.ANVIL_WINDOW_ID);
-                return;
-            }
-            if (clicked < 0 || clicked > options.size()) return;
-            Option option = options.get(clicked);
-            // The inventory may have changed while the form was open.
-            if (who.getInventory().getHeldItemIndex() != heldSlot
-                    || !who.getInventory().getItemInHand().equalsExact(held)
-                    || !who.getInventory().getItem(option.slot()).equalsExact(option.book())) {
-                who.sendMessage("§cПредметы изменились, открой наковальню ещё раз");
-                return;
-            }
-            apply(who, option);
-        });
-        player.showFormWindow(form);
-        return true;
+        return !options.isEmpty() && AnvilMenu.open(player, anvil, held, options);
     }
 }
