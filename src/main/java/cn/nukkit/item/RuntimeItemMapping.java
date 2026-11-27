@@ -84,6 +84,17 @@ public class RuntimeItemMapping {
             boolean componentBased = entry.has("componentBased") && entry.get("componentBased").getAsBoolean();
             if (protocolId >= ProtocolInfo.v1_21_60) {
                 CompoundTag components = (CompoundTag) itemComponents.get(identifier);
+                if (components != null && isPotion(identifier)) {
+                    // Vanilla potion components are empty, so the client falls back to a
+                    // max stack size of 1. Inject max_stack_size=64 so potions stack and
+                    // can be moved/combined in the inventory like on PMMP.
+                    CompoundTag itemProperties = new CompoundTag();
+                    itemProperties.putInt("max_stack_size", 64);
+                    CompoundTag wrapper = new CompoundTag();
+                    wrapper.putCompound("item_properties", itemProperties);
+                    components = components.clone();
+                    components.putCompound("components", wrapper);
+                }
                 this.vanillaItems.put(identifier, new ItemComponentPacket.ItemDefinition(
                         identifier,
                         runtimeId,
@@ -467,6 +478,12 @@ public class RuntimeItemMapping {
 
     public Collection<ItemComponentPacket.ItemDefinition> getVanillaItemDefinitions() {
         return this.vanillaItems.values();
+    }
+
+    private static boolean isPotion(String identifier) {
+        return "minecraft:potion".equals(identifier)
+                || "minecraft:splash_potion".equals(identifier)
+                || "minecraft:lingering_potion".equals(identifier);
     }
 
     public int getProtocolId() {
