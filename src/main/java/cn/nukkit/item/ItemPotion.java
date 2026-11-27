@@ -73,9 +73,12 @@ public class ItemPotion extends Item {
         };
     }
 
+    /**
+     * Drinkable potions stack up to 64. Splash and lingering potions stay unstackable.
+     */
     @Override
     public int getMaxStackSize() {
-        return 1;
+        return 64;
     }
 
     @Override

@@ -84,6 +84,14 @@ public class InventoryTransaction {
                 return;
             }
 
+            if (slotChangeAction.getInventory() instanceof cn.nukkit.inventory.BrewingInventory
+                    && slotChangeAction.getSlot() >= 1 && slotChangeAction.getSlot() <= 3
+                    && targetItem.getCount() > 1) {
+                invalid = true;
+                Server.getInstance().getLogger().debug("Failed to add SlotChangeAction for " + source.getName() + ": brewing stand bottle slot holds only one item");
+                return;
+            }
+
             if (!slotChangeAction.getInventory().allowedToAdd(targetItem)) {
                 invalid = true;
                 Server.getInstance().getLogger().debug("Failed to add SlotChangeAction for " + source.getName() + ": " + slotChangeAction.getInventory().getName() + " inventory doesn't allow item " + targetItem.getId());

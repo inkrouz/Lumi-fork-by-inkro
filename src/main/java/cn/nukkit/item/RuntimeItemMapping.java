@@ -84,6 +84,9 @@ public class RuntimeItemMapping {
             boolean componentBased = entry.has("componentBased") && entry.get("componentBased").getAsBoolean();
             if (protocolId >= ProtocolInfo.v1_21_60) {
                 CompoundTag components = (CompoundTag) itemComponents.get(identifier);
+                if ("minecraft:potion".equals(identifier)) {
+                    components = createStackablePotionComponents();
+                }
                 this.vanillaItems.put(identifier, new ItemComponentPacket.ItemDefinition(
                         identifier,
                         runtimeId,
@@ -463,6 +466,20 @@ public class RuntimeItemMapping {
 
     public List<RuntimeEntry> getItemPaletteEntries() {
         return this.itemPaletteEntries;
+    }
+
+    /**
+     * Item components for drinkable potions: tells the client that they stack up to 64
+     * (and stack only with the same potion type), otherwise the client refuses to take 64 from
+     * the creative inventory and to move or merge stacks. Intentionally contains no durability,
+     * damage or display name components.
+     */
+    private static CompoundTag createStackablePotionComponents() {
+        return new CompoundTag()
+                .putCompound("components", new CompoundTag()
+                        .putCompound("item_properties", new CompoundTag()
+                                .putInt("max_stack_size", 64)
+                                .putByte("stacked_by_data", 1)));
     }
 
     public Collection<ItemComponentPacket.ItemDefinition> getVanillaItemDefinitions() {
