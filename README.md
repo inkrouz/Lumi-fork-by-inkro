@@ -68,3 +68,17 @@ compileOnly("com.koshakmine:Lumi:1.6.10-SNAPSHOT")
 [<img src="https://avatars.githubusercontent.com/u/99014792?s=200&v=4" width="18"/>]() [PowerNukkitX](https://github.com/PowerNukkitX/PowerNukkitX)  
 [<img src="https://avatars.githubusercontent.com/u/20168691?s=200&v=4" width="18"/>]() [EaseCation Nukkit](https://github.com/EaseCation/Nukkit)  
 [<img src="https://avatars.githubusercontent.com/u/26197131?v=4" width="18"/>]() [NukkitPetteriM1Edition](https://github.com/PetteriM1/NukkitPetteriM1Edition)
+
+## Rise (native core)
+
+This build is branded **Rise**. Plugin API is unchanged (`cn.nukkit.*`), existing plugins keep working.
+
+Compute-heavy kernels run in C++ (`native/`): explosion ray casting and entity exposure (TNT/anarchy load).
+On start the server creates `rise/native/` next to the jar and loads `librise_native.so` / `rise_native.dll` from there:
+
+1. `rise/native/override/<lib>` - your own build wins if present
+2. otherwise the library bundled in the jar is extracted to `rise/native/`
+3. otherwise, if `g++` and a JDK are on the host, bundled sources are built into `rise/native/`
+4. otherwise the pure-Java implementation is used (nothing breaks)
+
+Disable with `-Drise.native=false` or env `RISE_NATIVE=false`.

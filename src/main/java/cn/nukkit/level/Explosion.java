@@ -22,6 +22,7 @@ import cn.nukkit.item.ItemBlock;
 import cn.nukkit.level.particle.HugeExplodeSeedParticle;
 import cn.nukkit.math.*;
 import cn.nukkit.nbt.tag.CompoundTag;
+import cn.nukkit.rise.NativeCore;
 import cn.nukkit.utils.Hash;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -129,6 +130,11 @@ public class Explosion {
             fireIgnitions = new LinkedHashSet<>();
         }
 
+        // Rise: ray casting runs in C++ when the native core is loaded; Java path below is the fallback.
+        if (NativeCore.isAvailable() && explodeANative(incendiary)) {
+            return true;
+        }
+
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
         Vector3 vector = new Vector3(0, 0, 0);
@@ -185,6 +191,162 @@ public class Explosion {
         return true;
     }
 
+    private static final int NATIVE_MAX_RADIUS = 48;
+    private static final int NATIVE_DENSITY_MIN_ENTITIES = 8;
+    private static final long NATIVE_DENSITY_MAX_CELLS = 4_000_000L;
+
+    /**
+     * Rise: snapshots block resistance around the explosion and runs the ray casting in C++.
+     * Grid index = (y * dim + z) * dim + x. Returns false if the caller must use the Java path.
+     */
+    private boolean explodeANative(boolean incendiary) {
+        int r = (int) Math.ceil(this.size * 1.7334d) + 2;
+        if (r > NATIVE_MAX_RADIUS) {
+            return false;
+        }
+        int dim = r * 2 + 1;
+        int ox = NukkitMath.floorDouble(this.source.x) - r;
+        int oy = NukkitMath.floorDouble(this.source.y) - r;
+        int oz = NukkitMath.floorDouble(this.source.z) - r;
+
+        float[] grid = new float[dim * dim * dim];
+        for (int gy = 0; gy < dim; gy++) {
+            int wy = oy + gy;
+            boolean inRange = level.isYInRange(wy);
+            for (int gz = 0; gz < dim; gz++) {
+                for (int gx = 0; gx < dim; gx++) {
+                    float v = -1f;
+                    if (inRange) {
+                        int wx = ox + gx;
+                        int wz = oz + gz;
+                        if (level.getBlockIdAt(wx, wy, wz) != BlockID.AIR) {
+                            Block block = level.getBlock(wx, wy, wz);
+                            if (!block.isAir()) {
+                                Block layer1 = block.getLevelBlockAtLayer(1);
+                                v = (float) Math.max(block.getResistance(), layer1.getResistance());
+                            }
+                        }
+                    }
+                    grid[(gy * dim + gz) * dim + gx] = v;
+                }
+            }
+        }
+
+        long seed = ThreadLocalRandom.current().nextLong() | 1L;
+        int[] result = NativeCore.rays(grid, ox, oy, oz, dim, dim, dim,
+                this.source.x, this.source.y, this.source.z, this.size,
+                incendiary ? fireSpawnChance : 0d, level.getMinBlockY(), level.getMaxBlockY(), seed);
+        if (result == null) {
+            return false;
+        }
+
+        for (int e : result) {
+            int idx = e & 0x7fffffff;
+            int gx = idx % dim;
+            int t = idx / dim;
+            int gz = t % dim;
+            int gy = t / dim;
+            Block block = level.getBlock(ox + gx, oy + gy, oz + gz);
+            if (this.affectedBlocks.add(block)) {
+                if (incendiary && e < 0) {
+                    this.fireIgnitions.add(block);
+                }
+                Block layer1 = block.getLevelBlockAtLayer(1);
+                if (!layer1.isAir()) {
+                    this.affectedBlocks.add(layer1);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Rise: batch-computes entity exposure in C++ when many entities are in range.
+     * Returns null (or -1 per entity) when the Java implementation must be used.
+     */
+    private float[] nativeDensities(Entity[] list, double explosionSize) {
+        if (!NativeCore.isAvailable() || list.length < NATIVE_DENSITY_MIN_ENTITIES) {
+            return null;
+        }
+        double[] bbs = new double[list.length * 6];
+        int[] map = new int[list.length];
+        int n = 0;
+        double loX = this.source.x, loY = this.source.y, loZ = this.source.z;
+        double hiX = loX, hiY = loY, hiZ = loZ;
+        for (int i = 0; i < list.length; i++) {
+            Entity entity = list[i];
+            if (entity.distance(this.source) / explosionSize > 1) {
+                continue;
+            }
+            AxisAlignedBB bb = entity.boundingBox;
+            if (bb == null) {
+                continue;
+            }
+            int o = n * 6;
+            bbs[o] = bb.getMinX();
+            bbs[o + 1] = bb.getMinY();
+            bbs[o + 2] = bb.getMinZ();
+            bbs[o + 3] = bb.getMaxX();
+            bbs[o + 4] = bb.getMaxY();
+            bbs[o + 5] = bb.getMaxZ();
+            map[n++] = i;
+            loX = Math.min(loX, bb.getMinX());
+            loY = Math.min(loY, bb.getMinY());
+            loZ = Math.min(loZ, bb.getMinZ());
+            hiX = Math.max(hiX, bb.getMaxX());
+            hiY = Math.max(hiY, bb.getMaxY());
+            hiZ = Math.max(hiZ, bb.getMaxZ());
+        }
+        if (n < NATIVE_DENSITY_MIN_ENTITIES) {
+            return null;
+        }
+
+        int ox = NukkitMath.floorDouble(loX) - 2;
+        int oy = NukkitMath.floorDouble(loY) - 2;
+        int oz = NukkitMath.floorDouble(loZ) - 2;
+        int dx = NukkitMath.ceilDouble(hiX) + 2 - ox + 1;
+        int dy = NukkitMath.ceilDouble(hiY) + 2 - oy + 1;
+        int dz = NukkitMath.ceilDouble(hiZ) + 2 - oz + 1;
+        long cells = (long) dx * dy * dz;
+        if (cells > NATIVE_DENSITY_MAX_CELLS) {
+            return null;
+        }
+
+        byte[] solid = new byte[(int) cells];
+        for (int gy = 0; gy < dy; gy++) {
+            int wy = oy + gy;
+            if (!level.isYInRange(wy)) {
+                continue;
+            }
+            for (int gz = 0; gz < dz; gz++) {
+                int wz = oz + gz;
+                for (int gx = 0; gx < dx; gx++) {
+                    int wx = ox + gx;
+                    if (level.getBlockIdAt(wx, wy, wz) == BlockID.AIR) {
+                        continue;
+                    }
+                    Block block = level.getBlock(wx, wy, wz);
+                    AxisAlignedBB bb = block.getCollisionBoundingBox();
+                    if (bb != null && bb.isVectorInside(wx, wy, wz)) {
+                        solid[(gy * dz + gz) * dx + gx] = 1;
+                    }
+                }
+            }
+        }
+
+        float[] res = NativeCore.density(solid, ox, oy, oz, dx, dy, dz,
+                this.source.x, this.source.y, this.source.z, bbs, n);
+        if (res == null) {
+            return null;
+        }
+        float[] out = new float[list.length];
+        java.util.Arrays.fill(out, -1f);
+        for (int k = 0; k < n; k++) {
+            out[map[k]] = res[k];
+        }
+        return out;
+    }
+
     /**
      * Executes the explosion's effects on the world. This includes destroying blocks (if any),
      * harming and knocking back entities, and creating sounds and particles.
@@ -237,13 +399,18 @@ public class Explosion {
 
         AxisAlignedBB explosionBB = new SimpleAxisAlignedBB(minX, minY, minZ, maxX, maxY, maxZ);
         Entity[] list = this.level.getNearbyEntities(explosionBB, this.what instanceof Entity ? (Entity) this.what : null);
-        for (Entity entity : list) {
+        float[] nativeDensity = nativeDensities(list, explosionSize);
+        for (int entityIndex = 0; entityIndex < list.length; entityIndex++) {
+            Entity entity = list[entityIndex];
             double distance = entity.distance(this.source) / explosionSize;
 
             if (distance <= 1) {
                 Vector3 motion = entity.subtract(this.source).normalize();
 
-                float blockDensity = 1 - level.getBlockDensity(this.source, entity.boundingBox);
+                float exposure = nativeDensity != null && nativeDensity[entityIndex] >= 0
+                        ? nativeDensity[entityIndex]
+                        : level.getBlockDensity(this.source, entity.boundingBox);
+                float blockDensity = 1 - exposure;
                 double force = this.size * 2.0F;
                 double d = entity.distance(source) / force;
                 double impact = (1.0D - d) * blockDensity;

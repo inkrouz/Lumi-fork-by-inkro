@@ -37,3 +37,5 @@ resource_packs/*
 scoreboard.json
 /cache/auth/
 /keys
+# Rise: prebuilt native libraries are produced by CI
+src/main/resources/rise-native/

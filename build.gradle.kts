@@ -150,7 +150,7 @@ tasks {
     }
 
     shadowJar {
-        archiveBaseName.set("Lumi")
+        archiveBaseName.set("Rise")
         archiveClassifier.set("")
         manifest {
             attributes(
@@ -199,4 +199,9 @@ gitProperties {
 
 tasks.processResources {
     dependsOn("generateGitProperties")
+    // Rise: bundle C++ sources so the core can build itself on the host if no prebuilt library fits
+    from("native") {
+        include("*.h", "*.cpp")
+        into("rise-native/src")
+    }
 }

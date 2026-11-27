@@ -1,0 +1,77 @@
+name: Rise Build
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: native ${{ matrix.os-name }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runs-on: ubuntu-latest,    os-name: linux,   arch: x86_64,  lib: librise_native.so }
+          - { runs-on: ubuntu-24.04-arm, os-name: linux,   arch: aarch64, lib: librise_native.so }
+          - { runs-on: windows-latest,   os-name: windows, arch: x86_64,  lib: rise_native.dll }
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build native library
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ "${{ matrix.os-name }}" = "windows" ]; then
+            INC_OS=win32; LINK="-static"
+          else
+            INC_OS=linux; LINK="-static-libstdc++ -static-libgcc"
+          fi
+          g++ -O3 -std=c++17 -ffp-contract=off -Wall -shared -fPIC \
+            -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/$INC_OS" \
+            native/rise_core.cpp native/rise_jni.cpp $LINK -o "out/${{ matrix.lib }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os-name }}-${{ matrix.arch }}
+          path: out/${{ matrix.lib }}
+
+  jar:
+    needs: native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Download native libraries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: natives
+      - name: Put libraries into resources
+        run: |
+          for d in natives/native-*; do
+            name=$(basename "$d"); target="src/main/resources/rise-native/${name#native-}"
+            mkdir -p "$target"; cp "$d"/* "$target"/
+          done
+          find src/main/resources/rise-native -type f
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      - name: Build Rise jar
+        run: chmod +x ./gradlew && ./gradlew shadowJar -x test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rise-jar
+          path: build/libs/Rise-*.jar

@@ -311,7 +311,7 @@ public class Server {
             }
         }
 
-        log.info("\u00A7b-- \u00A7dLumi \u00A7b--");
+        log.info("\u00A7b-- \u00A7dRise \u00A7b--");
 
         this.consoleSender = new ConsoleCommandSender();
 
