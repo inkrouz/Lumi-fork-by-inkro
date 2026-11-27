@@ -330,6 +330,7 @@ public class Server {
         Registries.ITEM_LEGACY.init();
         Registries.ITEM.init();
         Registries.CREATIVE_ITEM.init();
+        cn.nukkit.item.enchantment.book.CustomBooks.load(this);
         EnumBiome.values();
         Attribute.init();
         GlobalBlockPalette.getOrCreateRuntimeId(ProtocolInfo.CURRENT_PROTOCOL, 0, 0);

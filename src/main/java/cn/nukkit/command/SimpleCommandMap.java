@@ -59,6 +59,7 @@ public class SimpleCommandMap implements CommandMap {
         this.register("nukkit", new StatusCommand("status"));
         this.register("nukkit", new SummonCommand("summon"));
         this.register("nukkit", new WorldCommand("world"));
+        this.register("nukkit", new cn.nukkit.command.defaults.CustomBookCommand("cbook"));
         this.register("nukkit", new GenerateWorldCommand("genworld"));
         this.register("nukkit", new WhitelistCommand("whitelist"));
         this.register("nukkit", new GameruleCommand("gamerule"));

@@ -2702,6 +2702,10 @@ public class Level implements ChunkManager, Metadatable {
                 if (ev.getAction() == Action.RIGHT_CLICK_BLOCK) {
                     target.onPlayerRightClick(player, item, face, new Vector3(fx, fy, fz));
                 }
+                if (player.isSneaking() && target.getId() == BlockID.ANVIL && ev.getAction() == Action.RIGHT_CLICK_BLOCK
+                        && cn.nukkit.item.enchantment.book.CustomBooks.applyAtAnvil(player)) {
+                    return player.getInventory().getItemInHand();
+                }
                 if ((!player.isSneaking() || player.getInventory().getItemInHand().isNull()) && target.canBeActivated() && target.onActivate(item, player)) {
                     if (item.isTool() && item.getDamage() >= item.getMaxDurability()) {
                         this.addSoundToViewers(target, cn.nukkit.level.Sound.RANDOM_BREAK);

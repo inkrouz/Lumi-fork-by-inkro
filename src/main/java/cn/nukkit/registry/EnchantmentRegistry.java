@@ -171,7 +171,8 @@ public class EnchantmentRegistry implements IRegistry<Identifier, Enchantment, E
 
     @Override
     public Enchantment get(Identifier key) {
-        return IDENTIFIER_TO_ENCHANTMENT.get(key).clone();
+        Enchantment found = IDENTIFIER_TO_ENCHANTMENT.get(key);
+        return found == null ? null : found.clone();
     }
 
     public Enchantment get(int id) {

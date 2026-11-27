@@ -19,11 +19,40 @@ public class WorldCommand extends Command {
         this.commandParameters.put("default", new CommandParameter[]{
                 new CommandParameter("world", CommandParamType.STRING, false)
         });
+        this.commandParameters.put("chunk", new CommandParameter[]{
+                CommandParameter.newEnum("action", new String[]{"chunk"}),
+                new CommandParameter("radius", CommandParamType.RAWTEXT, false)
+        });
     }
 
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
         if (!this.testPermission(sender)) {
+            return true;
+        }
+
+        if ((args.length == 2 || args.length == 3) && args[0].equalsIgnoreCase("chunk")) {
+            if (!sender.hasPermission("nukkit.command.world.chunk")) {
+                sender.sendMessage("§cНет прав");
+                return true;
+            }
+            if (args[1].equalsIgnoreCase("stop")) {
+                sender.sendMessage(cn.nukkit.level.ChunkPregenerator.stop() ? "Прогрузка остановлена" : "Прогрузка не запущена");
+                return true;
+            }
+            int radius;
+            try {
+                radius = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                radius = 0;
+            }
+            Level level = args.length == 3 ? Server.getInstance().getLevelByName(args[2])
+                    : sender instanceof Player player ? player.getLevel() : Server.getInstance().getDefaultLevel();
+            if (radius < 16 || radius > 10000 || level == null) {
+                sender.sendMessage("/world chunk <радиус в блоках 16-10000> [мир] | /world chunk stop");
+            } else if (!cn.nukkit.level.ChunkPregenerator.start(level, sender, radius)) {
+                sender.sendMessage("§cПрогрузка уже идёт. /world chunk stop");
+            }
             return true;
         }
 
