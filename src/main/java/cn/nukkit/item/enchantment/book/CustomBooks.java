@@ -2,6 +2,10 @@ package cn.nukkit.item.enchantment.book;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import cn.nukkit.block.Block;
+import cn.nukkit.form.element.ElementButton;
+import cn.nukkit.form.window.FormWindowSimple;
+import cn.nukkit.inventory.AnvilInventory;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.item.enchantment.EnchantmentRarity;
@@ -16,6 +20,8 @@ import lombok.extern.log4j.Log4j2;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -120,37 +126,89 @@ public final class CustomBooks {
         item.setNamedTag(tag);
     }
 
-    /** Applies the first suitable custom book from the inventory to the held item. */
-    public static boolean applyAtAnvil(Player player) {
-        Item held = player.getInventory().getItemInHand();
-        if (held.isNull() || held.getCount() != 1 || held.getId() == Item.ENCHANTED_BOOK) return false;
+    private record Option(int slot, Item book, Definition definition, int result) {
+    }
 
+    /** Every book in the inventory that would upgrade the item. */
+    private static List<Option> options(Player player, Item held) {
+        List<Option> options = new ArrayList<>();
+        if (held.isNull() || held.getCount() != 1 || held.getId() == Item.ENCHANTED_BOOK) return options;
         for (Map.Entry<Integer, Item> entry : player.getInventory().getContents().entrySet()) {
             Item book = entry.getValue();
             if (book.getId() != Item.ENCHANTED_BOOK || book.getCount() != 1) continue;
             for (Definition d : BOOKS.values()) {
                 int bookLevel = book.getCustomEnchantmentLevel(d.id());
                 if (bookLevel < 1 || !d.type().canEnchantItem(held)) continue;
-
                 int current = held.getCustomEnchantmentLevel(d.id());
                 int result = Math.min(d.maxLevel(), current == bookLevel ? current + 1 : Math.max(current, bookLevel));
-                if (result <= current) continue;
-
-                if (!player.isCreative()) {
-                    if (player.getExperienceLevel() < d.cost()) {
-                        player.sendMessage("§cНужно уровней опыта: " + d.cost());
-                        return true;
-                    }
-                    player.setExperience(player.getExperience(), player.getExperienceLevel() - d.cost());
-                }
-                Item upgraded = held.clone();
-                enchant(upgraded, d, result);
-                player.getInventory().setItem(entry.getKey(), Item.get(Item.AIR));
-                player.getInventory().setItemInHand(upgraded);
-                player.sendMessage("§aКнига применена: " + d.name() + " §f" + Enchantment.getLevelString(result));
-                return true;
+                if (result > current) options.add(new Option(entry.getKey(), book.clone(), d, result));
             }
         }
-        return false;
+        return options;
+    }
+
+    private static void apply(Player player, Option option) {
+        Item held = player.getInventory().getItemInHand();
+        Definition d = option.definition();
+        if (!player.isCreative()) {
+            if (player.getExperienceLevel() < d.cost()) {
+                player.sendMessage("§cНужно уровней опыта: " + d.cost());
+                return;
+            }
+            player.setExperience(player.getExperience(), player.getExperienceLevel() - d.cost());
+        }
+        Item upgraded = held.clone();
+        enchant(upgraded, d, option.result());
+        player.getInventory().setItem(option.slot(), Item.get(Item.AIR));
+        player.getInventory().setItemInHand(upgraded);
+        player.sendMessage("§aКнига применена: " + d.name() + " §f" + Enchantment.getLevelString(option.result()));
+    }
+
+    /** Quick apply (sneak + tap): uses the first suitable book. */
+    public static boolean applyAtAnvil(Player player) {
+        List<Option> options = options(player, player.getInventory().getItemInHand());
+        if (options.isEmpty()) return false;
+        apply(player, options.get(0));
+        return true;
+    }
+
+    /** @return false if there is nothing to offer, so the normal anvil should open. */
+    public static boolean openMenu(Player player, Block anvil) {
+        Item held = player.getInventory().getItemInHand().clone();
+        int heldSlot = player.getInventory().getHeldItemIndex();
+        List<Option> options = options(player, held);
+        if (options.isEmpty()) return false;
+
+        FormWindowSimple form = new FormWindowSimple("Наковальня", "Выбери книгу для предмета в руке");
+        for (Option option : options) {
+            Definition d = option.definition();
+            form.addButton(new ElementButton(d.name() + " §r" + Enchantment.getLevelString(option.result())
+                    + "\nЦена: " + d.cost() + " ур."));
+        }
+        form.addButton(new ElementButton("Обычная наковальня"));
+        form.addHandler((who, formId) -> {
+            if (form.wasClosed() || form.getResponse() == null) return;
+            if (who.getLevel() != anvil.getLevel() || who.distanceSquared(anvil) > 49
+                    || anvil.getLevel().getBlockIdAt(anvil.getFloorX(), anvil.getFloorY(), anvil.getFloorZ()) != Block.ANVIL) {
+                return;
+            }
+            int clicked = form.getResponse().getClickedButtonId();
+            if (clicked == options.size()) {
+                who.addWindow(new AnvilInventory(who.getUIInventory(), anvil), Player.ANVIL_WINDOW_ID);
+                return;
+            }
+            if (clicked < 0 || clicked > options.size()) return;
+            Option option = options.get(clicked);
+            // The inventory may have changed while the form was open.
+            if (who.getInventory().getHeldItemIndex() != heldSlot
+                    || !who.getInventory().getItemInHand().equalsExact(held)
+                    || !who.getInventory().getItem(option.slot()).equalsExact(option.book())) {
+                who.sendMessage("§cПредметы изменились, открой наковальню ещё раз");
+                return;
+            }
+            apply(who, option);
+        });
+        player.showFormWindow(form);
+        return true;
     }
 }
