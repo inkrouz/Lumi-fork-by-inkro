@@ -17,6 +17,7 @@
 ## Build / run
 - Requires Java 21+. Build with `./gradlew build` (shadowJar → `Lumi.jar`). Run: `java -jar Lumi.jar`.
 - **Java cannot run in the PolyDev sandbox** (`Failed to mark memory page as executable` — proot restriction). Full Gradle build must be done on a real machine.
+- Fixed compile error: `LevelDBConstantsTest.java` had a missing `;` after `package cn.nukkit.level.format.leveldb` (now compiles). The CI workflow still deletes non-PaletteRemapTest tests by design.
 
 ## Potion stacking
 - Potions stack to 64 (already in this branch): `getMaxStackSize()` = 64 in `ItemPotion`/`ItemPotionSplash`/`ItemPotionLingering`, plus `max_stack_size` component injected in `RuntimeItemMapping`.
