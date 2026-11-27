@@ -1,0 +1,28 @@
+name: Native light build
+
+on:
+  push:
+    branches: [native-light]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build C++ library
+        run: |
+          mkdir -p src/main/resources/native/linux-x64
+          g++ -O3 -std=c++17 -shared -fPIC -static-libstdc++ -static-libgcc -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" native/light.cpp -o src/main/resources/native/linux-x64/liblumilight.so
+      - name: Build jar
+        run: chmod +x gradlew && ./gradlew shadowJar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lumi-native-light
+          path: build/libs/*.jar

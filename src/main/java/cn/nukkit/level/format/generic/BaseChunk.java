@@ -1,5 +1,6 @@
 package cn.nukkit.level.format.generic;
 
+import cn.nukkit.level.light.NativeLight;
 import cn.nukkit.Server;
 import cn.nukkit.block.Block;
 import cn.nukkit.blockentity.BlockEntity;
@@ -297,36 +298,28 @@ public abstract class BaseChunk extends BaseFullChunk implements Chunk {
             }
         }
 
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = minY; y <= maxY; y++) {
-                    int currentLight = this.getBlockLight(x, y, z);
-                    if (currentLight > 1) {
-                        // Propagate to neighbors within chunk
-                        propagateBlockLightToNeighbor(x - 1, y, z, currentLight, minY, maxY);
-                        propagateBlockLightToNeighbor(x + 1, y, z, currentLight, minY, maxY);
-                        propagateBlockLightToNeighbor(x, y - 1, z, currentLight, minY, maxY);
-                        propagateBlockLightToNeighbor(x, y + 1, z, currentLight, minY, maxY);
-                        propagateBlockLightToNeighbor(x, y, z - 1, currentLight, minY, maxY);
-                        propagateBlockLightToNeighbor(x, y, z + 1, currentLight, minY, maxY);
-                    }
-                }
-            }
+        int size = (maxY - minY + 1) << 8;
+        byte[] light = new byte[size];
+        byte[] filter = new byte[size];
+        boolean hasLight = false;
+        for (int i = 0; i < size; i++) {
+            int level = this.getBlockLight(i & 15, minY + (i >> 8), (i >> 4) & 15);
+            light[i] = (byte) level;
+            hasLight |= level > 1;
         }
-    }
-
-    private void propagateBlockLightToNeighbor(int x, int y, int z, int sourceLight, int minY, int maxY) {
-        // Check bounds (only within chunk)
-        if (x < 0 || x >= 16 || z < 0 || z >= 16 || y < minY || y > maxY) {
+        if (!hasLight) {
             return;
         }
-
-        int blockId = this.getBlockId(x, y, z);
-        int lightFilter = Registries.BLOCK.getLightFilter(blockId);
-        int newLight = sourceLight - Math.max(1, lightFilter);
-
-        if (newLight > 0 && newLight > this.getBlockLight(x, y, z)) {
-            this.setBlockLight(x, y, z, newLight);
+        for (int i = 0; i < size; i++) {
+            int blockId = this.getBlockId(i & 15, minY + (i >> 8), (i >> 4) & 15);
+            filter[i] = (byte) Math.min(15, Registries.BLOCK.getLightFilter(blockId));
+        }
+        byte[] before = light.clone();
+        NativeLight.flood(light, filter);
+        for (int i = 0; i < size; i++) {
+            if (light[i] != before[i]) {
+                this.setBlockLight(i & 15, minY + (i >> 8), (i >> 4) & 15, light[i]);
+            }
         }
     }
 
