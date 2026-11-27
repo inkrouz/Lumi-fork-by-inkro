@@ -466,7 +466,12 @@ public class Level implements ChunkManager, Metadatable {
         }
 
         if (this.server.getSettings().world().chunk().asyncChunks()) {
-            this.asyncChuckExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("AsyncChunkThread for " + name).build());
+            // Leave one core for the main thread; every worker serializes its own chunk copy.
+            int chunkThreads = Math.max(1, Math.min(4, Runtime.getRuntime().availableProcessors() - 1));
+            this.asyncChuckExecutor = Executors.newFixedThreadPool(chunkThreads, new ThreadFactoryBuilder()
+                    .setNameFormat("AsyncChunkThread-%d for " + name.replace("%", "%%"))
+                    .setUncaughtExceptionHandler((thread, ex) -> server.getLogger().error("Exception in " + thread.getName(), ex))
+                    .build());
         }
     }
 
