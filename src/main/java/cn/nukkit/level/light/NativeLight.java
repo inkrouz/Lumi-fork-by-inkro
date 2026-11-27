@@ -13,12 +13,19 @@ public final class NativeLight {
     }
 
     private static boolean load() {
-        String arch = System.getProperty("os.arch");
-        if (!System.getProperty("os.name").toLowerCase().contains("linux")
-                || !(arch.equals("amd64") || arch.equals("x86_64"))) {
+        if (!System.getProperty("os.name").toLowerCase().contains("linux")) {
             return false;
         }
-        try (InputStream in = NativeLight.class.getResourceAsStream("/native/linux-x64/liblumilight.so")) {
+        String arch = System.getProperty("os.arch");
+        String libPath;
+        if (arch.equals("amd64") || arch.equals("x86_64")) {
+            libPath = "/native/linux-x64/liblumilight.so";
+        } else if (arch.equals("aarch64") || arch.equals("arm64")) {
+            libPath = "/native/linux-aarch64/liblumilight.so";
+        } else {
+            return false;
+        }
+        try (InputStream in = NativeLight.class.getResourceAsStream(libPath)) {
             if (in == null) return false;
             Path file = Files.createTempFile("lumilight", ".so");
             file.toFile().deleteOnExit();
