@@ -20,4 +20,6 @@
 - Fixed compile error: `LevelDBConstantsTest.java` had a missing `;` after `package cn.nukkit.level.format.leveldb` (now compiles). The CI workflow still deletes non-PaletteRemapTest tests by design.
 
 ## Potion stacking
-- Potions stack to 64 (already in this branch): `getMaxStackSize()` = 64 in `ItemPotion`/`ItemPotionSplash`/`ItemPotionLingering`, plus `max_stack_size` component injected in `RuntimeItemMapping`.
+- Potions stack to 64: `getMaxStackSize()` = 64 in `ItemPotion`/`ItemPotionSplash`/`ItemPotionLingering`.
+- Client side (protocol >= 1.21.60): `RuntimeItemMapping` marks potions `componentBased=true` and injects `components.item_properties.max_stack_size=64`. Vanilla potions are `componentBased=false`, so the client would otherwise ignore server components and fall back to max stack 1.
+- Creative menu shows full stacks: `CreativeItemRegistry.getCreativeItemData` sets count = maxStackSize for stackable items.

@@ -84,15 +84,17 @@ public class RuntimeItemMapping {
             boolean componentBased = entry.has("componentBased") && entry.get("componentBased").getAsBoolean();
             if (protocolId >= ProtocolInfo.v1_21_60) {
                 CompoundTag components = (CompoundTag) itemComponents.get(identifier);
-                if (components != null && isPotion(identifier)) {
-                    // Vanilla potion components are empty, so the client falls back to a
-                    // max stack size of 1. Inject max_stack_size=64 so potions stack and
-                    // can be moved/combined in the inventory like on PMMP.
+                if (isPotion(identifier)) {
+                    // Vanilla potions are not component-based, so the client ignores any
+                    // server-sent components and falls back to a max stack size of 1.
+                    // Mark them component-based and inject max_stack_size=64 so potions
+                    // stack and can be moved/combined in the inventory like on PMMP.
+                    componentBased = true;
                     CompoundTag itemProperties = new CompoundTag();
                     itemProperties.putInt("max_stack_size", 64);
                     CompoundTag wrapper = new CompoundTag();
                     wrapper.putCompound("item_properties", itemProperties);
-                    components = components.clone();
+                    components = components == null ? new CompoundTag() : components.clone();
                     components.putCompound("components", wrapper);
                 }
                 this.vanillaItems.put(identifier, new ItemComponentPacket.ItemDefinition(

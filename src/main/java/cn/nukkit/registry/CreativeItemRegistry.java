@@ -231,12 +231,20 @@ public class CreativeItemRegistry implements IRegistry<Integer, CreativeItemRegi
             int creativeNetId = 1;
             ObjectArrayList<CreativeItemData> list = new ObjectArrayList<>();
             for (Map.Entry<Item, CreativeItemGroup> entry : contents.entrySet()) {
-                if (entry.getKey().isSupportedOn(protocol)) {
-                    list.add(new CreativeItemData(
-                            entry.getKey(), creativeNetId++,
-                            entry.getValue() != null ? entry.getValue().getGroupId() : 0
-                    ));
+                Item item = entry.getKey();
+                if (!item.isSupportedOn(protocol)) {
+                    continue;
                 }
+                // Show a full stack in the creative menu for stackable items
+                // (e.g. potions, which now stack to 64).
+                if (item.getMaxStackSize() > 1 && item.getCount() < item.getMaxStackSize()) {
+                    item = item.clone();
+                    item.setCount(item.getMaxStackSize());
+                }
+                list.add(new CreativeItemData(
+                        item, creativeNetId++,
+                        entry.getValue() != null ? entry.getValue().getGroupId() : 0
+                ));
             }
             return list;
         }
