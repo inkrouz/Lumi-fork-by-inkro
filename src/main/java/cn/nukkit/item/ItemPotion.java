@@ -75,7 +75,7 @@ public class ItemPotion extends Item {
 
     @Override
     public int getMaxStackSize() {
-        return 1;
+        return 64;
     }
 
     @Override
@@ -99,7 +99,9 @@ public class ItemPotion extends Item {
         if (player.isAdventure() || player.isSurvival()) {
             --this.count;
             player.getInventory().setItemInHand(this);
-            player.getInventory().addItem(new ItemGlassBottle());
+            for (Item leftover : player.getInventory().addItem(new ItemGlassBottle())) {
+                player.getLevel().dropItem(player, leftover);
+            }
         }
 
         if (potion != null) {

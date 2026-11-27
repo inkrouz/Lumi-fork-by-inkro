@@ -78,9 +78,6 @@ public class BlockAnvil extends BlockFallableMeta implements Faceable {
     @Override
     public boolean onActivate(Item item, Player player) {
         if (player != null) {
-            if (cn.nukkit.item.enchantment.book.CustomBooks.openMenu(player, this)) {
-                return true;
-            }
             player.addWindow(new AnvilInventory(player.getUIInventory(), this), Player.ANVIL_WINDOW_ID);
         }
         return true;

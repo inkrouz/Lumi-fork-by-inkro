@@ -16,6 +16,7 @@ import cn.nukkit.inventory.transaction.action.RepairItemAction;
 import cn.nukkit.inventory.transaction.action.SlotChangeAction;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.enchantment.Enchantment;
+import cn.nukkit.item.enchantment.book.CustomBooks;
 import cn.nukkit.item.enchantment.EnchantmentID;
 import cn.nukkit.network.protocol.LevelEventPacket;
 import cn.nukkit.network.protocol.types.NetworkInventoryAction;
@@ -34,6 +35,9 @@ public class RepairItemTransaction extends InventoryTransaction {
     private int cost;
 
     private boolean isError = false;
+
+    /** Server-built result when the material is a custom book. */
+    private Item customResult;
 
     public RepairItemTransaction(Player source, List<InventoryAction> actions) {
         super(source, actions);
@@ -100,6 +104,17 @@ public class RepairItemTransaction extends InventoryTransaction {
             }
         }
 
+        if (this.customResult != null) {
+            // Replace the client's preview with the server's item.
+            for (InventoryAction action : this.actions) {
+                if (action instanceof SlotChangeAction change && change.getInventory() instanceof PlayerInventory
+                        && change.getTargetItem().equalsExact(this.outputItem)) {
+                    change.getInventory().setItem(change.getSlot(), this.customResult.clone());
+                    change.getInventory().sendSlot(change.getSlot(), this.source);
+                }
+            }
+        }
+
         FakeBlockMenu holder = inventory.getHolder();
         Block oldBlock = this.source.level.getBlock(holder.getFloorX(), holder.getFloorY(), holder.getFloorZ());
         if (oldBlock instanceof BlockAnvil) {
@@ -149,6 +164,18 @@ public class RepairItemTransaction extends InventoryTransaction {
     }
 
     private boolean checkRecipeValid() {
+        this.customResult = null;
+        if (this.hasMaterial() && CustomBooks.isCustomBook(this.materialItem)) {
+            CustomBooks.Combination combination = CustomBooks.combine(this.inputItem, this.materialItem);
+            if (combination == null || this.outputItem.getId() != this.inputItem.getId()
+                    || (this.inputItem.getId() == Item.STRING_IDENTIFIED_ITEM
+                    && !this.inputItem.getNamespaceId().equalsIgnoreCase(this.outputItem.getNamespaceId()))) {
+                return false;
+            }
+            this.customResult = combination.result();
+            this.cost = combination.cost();
+            return this.source.isCreative() || this.source.getExperienceLevel() >= this.cost;
+        }
         int cost = 0;
         int baseRepairCost = this.inputItem.getRepairCost();
 

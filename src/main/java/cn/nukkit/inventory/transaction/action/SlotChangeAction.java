@@ -48,11 +48,6 @@ public class SlotChangeAction extends InventoryAction {
      * @return valid
      */
     @Override
-    public boolean onPreExecute(Player source) {
-        return !(this.inventory instanceof cn.nukkit.item.enchantment.book.AnvilMenu);
-    }
-
-    @Override
     public boolean isValid(Player source) {
         Item check = inventory.getItem(this.inventorySlot);
 
