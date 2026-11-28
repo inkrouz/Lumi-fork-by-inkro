@@ -74,7 +74,7 @@ public class PluginManager {
         PluginLoader pluginLoader = fileAssociations.get(JavaPluginLoader.class.getName());
         InternalPlugin plugin = InternalPlugin.INSTANCE;
         Map<String, Object> info = new HashMap<>();
-        info.put("name", "Lumi");
+        info.put("name", "Ruppim");
         info.put("version", server.getNukkitVersion());
         info.put("main", InternalPlugin.class.getName());
         File file;
@@ -84,7 +84,7 @@ public class PluginManager {
             file = new File(".");
         }
         PluginDescription description = new PluginDescription(info);
-        plugin.init(pluginLoader, this.getClass().getClassLoader(), server, description, new File("Lumi"), file);
+        plugin.init(pluginLoader, this.getClass().getClassLoader(), server, description, new File("Ruppim"), file);
         plugin.onLoad();
         plugins.put(description.getName(), plugin);
         enablePlugin(plugin);
@@ -492,7 +492,7 @@ public class PluginManager {
 
     public void disablePlugin(Plugin plugin) {
         if (InternalPlugin.INSTANCE == plugin) {
-            throw new UnsupportedOperationException("The Lumi Internal plugin can't be disabled.");
+            throw new UnsupportedOperationException("The Ruppim Internal plugin can't be disabled.");
         }
 
         if (plugin.isEnabled()) {

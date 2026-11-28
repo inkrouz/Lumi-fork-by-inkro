@@ -150,7 +150,7 @@ tasks {
     }
 
     shadowJar {
-        archiveBaseName.set("Lumi")
+        archiveBaseName.set("Ruppim")
         archiveClassifier.set("")
         manifest {
             attributes(

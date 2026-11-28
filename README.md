@@ -1,12 +1,12 @@
 <h1 align="center">
-    ✨ Lumi
+    ✨ Ruppim
 </h1>
 <p align="center">High-performance extensible Minecraft Bedrock server software</p>
 
 ## Introduction
-Lumi is a server software which was made to introduce modern Minecraft new features and different improvements. Hard-forked from [Nukkit-MOT](https://github.com/MemoriesOfTime/Nukkit-MOT/).  
+Ruppim is a fork of Lumi, a server software which was made to introduce modern Minecraft new features and different improvements. Hard-forked from [Nukkit-MOT](https://github.com/MemoriesOfTime/Nukkit-MOT/).  
 
-### What's new in Lumi?
+### What's new in Ruppim?
 1. Support for 1.20.0 – 1.26.60 version (you can set the minimum protocol in the config)
 2. More vanilla features
 3. Custom Blocks support

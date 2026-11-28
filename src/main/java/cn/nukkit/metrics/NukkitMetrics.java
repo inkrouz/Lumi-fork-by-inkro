@@ -47,8 +47,8 @@ public class NukkitMetrics {
         );
 
         metrics.addCustomChart(new SingleLineChart("players", server::getOnlinePlayersCount));
-        metrics.addCustomChart(new SimplePie("codename", () -> "Lumi"));
-        metrics.addCustomChart(new SimplePie("nukkit_version", () -> "Lumi " + Nukkit.API_VERSION));
+        metrics.addCustomChart(new SimplePie("codename", () -> "Ruppim"));
+        metrics.addCustomChart(new SimplePie("nukkit_version", () -> "Ruppim " + Nukkit.API_VERSION));
         metrics.addCustomChart(new SimplePie("xbox_auth", () -> server.getSettings().network().xboxAuth() ? "Required" : "Not required"));
 
         metrics.addCustomChart(new AdvancedPie("player_platform", new PlayerPlatformRetriever()));

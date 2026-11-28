@@ -38,11 +38,11 @@ import static cn.nukkit.utils.Utils.dynamic;
 @Log4j2
 public class Nukkit {
 
-    public static final String NUKKIT = "Lumi";
+    public static final String NUKKIT = "Ruppim";
     public final static Properties GIT_INFO = getGitInfo();
     public final static String VERSION = getVersion();
     public final static String API_VERSION = dynamic("1.6.10");
-    public final static String CODENAME = Utils.dynamic("Lumi");
+    public final static String CODENAME = Utils.dynamic("Ruppim");
     public final static String PATH = System.getProperty("user.dir") + '/';
     public final static String DATA_PATH = System.getProperty("user.dir") + '/';
     public final static String PLUGIN_PATH = DATA_PATH + "plugins";
@@ -77,7 +77,7 @@ public class Nukkit {
         }
 
         try {
-            System.out.print("\u001B]0;Lumi\u0007");
+            System.out.print("\u001B]0;Ruppim\u0007");
             new Server(PATH, DATA_PATH, PLUGIN_PATH, loadPlugins, debug);
         } catch (Throwable t) {
             log.throwing(t);

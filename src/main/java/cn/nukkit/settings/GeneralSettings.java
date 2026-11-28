@@ -14,11 +14,11 @@ import lombok.experimental.Accessors;
 public class GeneralSettings extends OkaeriConfig {
 
     @Comment("Server MOTD, displayed in the server list")
-    private String motd = "An Lumi server";
+    private String motd = "A Ruppim server";
 
     @CustomKey("sub-motd")
     @Comment("Server sub-MOTD, usually displayed in the LAN interface or on monitorings")
-    private String subMotd = "Powered by Lumi";
+    private String subMotd = "Powered by Ruppim";
 
     @CustomKey("server-port")
     private int serverPort = 19132;

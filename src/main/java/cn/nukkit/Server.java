@@ -311,7 +311,7 @@ public class Server {
             }
         }
 
-        log.info("\u00A7b-- \u00A7dLumi \u00A7b--");
+        log.info("\u00A7b-- \u00A7dRuppim \u00A7b--");
 
         this.consoleSender = new ConsoleCommandSender();
 
@@ -360,7 +360,8 @@ public class Server {
 
         this.resourcePackManager = new ResourcePackManager(
                 new ZippedResourcePackLoader(new File(Nukkit.DATA_PATH, "resource_packs")),
-                new JarPluginResourcePackLoader(new File(this.pluginPath))
+                new JarPluginResourcePackLoader(new File(this.pluginPath)),
+                new cn.nukkit.resourcepacks.loader.BuiltinResourcePackLoader()
         );
 
         this.pluginManager = new PluginManager(this, this.commandMap);

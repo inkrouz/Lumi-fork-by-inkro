@@ -52,7 +52,7 @@ jobs:
         run: |
           REF_NAME="${{ github.head_ref || github.ref_name }}"
           SAFE_REF_NAME="${REF_NAME//\//-}"
-          echo "name=lumi-$SAFE_REF_NAME" >> $GITHUB_OUTPUT
+          echo "name=ruppim-$SAFE_REF_NAME" >> $GITHUB_OUTPUT
           echo "safe=$SAFE_REF_NAME" >> $GITHUB_OUTPUT
 
       - name: Pack ZIP files
@@ -60,7 +60,7 @@ jobs:
           mkdir -p out
 
           # 1) ZIP с исходниками (без .git, build и кэшей)
-          zip -r out/lumi-source.zip . \
+          zip -r out/ruppim-source.zip . \
             -x ".git/*" \
             -x "*/.git/*" \
             -x ".gradle/*" \
@@ -73,7 +73,7 @@ jobs:
           # 2) ZIP с собранными jar-файлами
           mkdir -p jars
           find . -path "./out" -prune -o -path "*/build/libs/*.jar" -print -exec cp {} jars/ \;
-          zip -j out/lumi-build.zip jars/*.jar
+          zip -j out/ruppim-build.zip jars/*.jar
 
           # 3) Отдельно сами jar
           cp jars/*.jar out/
@@ -96,4 +96,4 @@ jobs:
           gh release create "$TAG" out/* \
             --target "${{ github.sha }}" \
             --title "Build (${{ steps.artifact_name.outputs.safe }})" \
-            --notes "Автосборка из коммита ${{ github.sha }}. lumi-source.zip — исходники, lumi-build.zip и .jar — сборка."
+            --notes "Автосборка из коммита ${{ github.sha }}. ruppim-source.zip — исходники, ruppim-build.zip и .jar — сборка."
