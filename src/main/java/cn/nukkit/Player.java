@@ -2788,7 +2788,48 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         infoPacket.mustAccept = this.server.getSettings().general().forceResources();
         this.dataPacket(infoPacket);
     }
+    private static String potionMode() {
+        // legacy (default): keep the vanilla legacy item type, only change max stack size -> vanilla icons
+        // pack: data-driven item with icon keys from the built-in pack (single icon per type)
+        try {
+            java.io.File file = new java.io.File(Nukkit.DATA_PATH, "ruppim.properties");
+            java.util.Properties props = new java.util.Properties();
+            if (file.exists()) {
+                try (java.io.InputStream in = new java.io.FileInputStream(file)) {
+                    props.load(in);
+                }
+            } else {
+                props.setProperty("potion-mode", "legacy");
+                try (java.io.OutputStream out = new java.io.FileOutputStream(file)) {
+                    props.store(out, "Ruppim settings. potion-mode: legacy | pack");
+                }
+            }
+            return props.getProperty("potion-mode", "legacy").trim().toLowerCase();
+        } catch (Exception e) {
+            return "legacy";
+        }
+    }
+
+    private static final String POTION_MODE = potionMode();
+
     private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
+        if (POTION_MODE.equals("legacy")) {
+            switch (original.getIdentifier()) {
+                case "minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion" -> {
+                    cn.nukkit.nbt.tag.CompoundTag data = new cn.nukkit.nbt.tag.CompoundTag()
+                            .putString("name", original.getIdentifier())
+                            .putInt("id", original.getRuntimeId())
+                            .putCompound("components", new cn.nukkit.nbt.tag.CompoundTag()
+                                    .putCompound("item_properties", new cn.nukkit.nbt.tag.CompoundTag()
+                                            .putInt("max_stack_size", 64)));
+                    return new ItemComponentPacket.ItemDefinition(original.getIdentifier(), original.getRuntimeId(),
+                            original.isComponentBased(), original.getVersion(), data);
+                }
+                default -> {
+                    return original;
+                }
+            }
+        }
         String icon = switch (original.getIdentifier()) {
             case "minecraft:potion" -> "ruppim_potion";
             case "minecraft:splash_potion" -> "ruppim_splash_potion";
