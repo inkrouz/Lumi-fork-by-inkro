@@ -20,6 +20,7 @@ public class PlayerFood {
     private double exhaustion;
 
     private int foodTickTimer;
+    private int regenTimer;
 
     private boolean enabled = true;
 
@@ -183,7 +184,43 @@ public class PlayerFood {
             }
         }
 
-        if (this.foodTickTimer == 0) {
+        if (difficulty != Difficulty.PEACEFUL) {
+            // Java-style natural regeneration
+            if (this.saturation > 0 && this.food >= 20) {
+                if (health < player.getMaxHealth()) {
+                    this.regenTimer += tickDiff;
+                    if (this.regenTimer >= 10) {
+                        this.regenTimer = 0;
+                        float amount = Math.min(this.saturation, 6f);
+                        this.player.heal(new EntityRegainHealthEvent(this.player, amount / 6f, EntityRegainHealthEvent.CAUSE_EATING));
+                        this.exhaust(amount);
+                    }
+                } else {
+                    this.regenTimer = 0;
+                }
+            } else if (this.food >= 18) {
+                this.regenTimer += tickDiff;
+                if (this.regenTimer >= 80) {
+                    this.regenTimer = 0;
+                    if (health < player.getMaxHealth()) {
+                        this.player.heal(new EntityRegainHealthEvent(this.player, 1, EntityRegainHealthEvent.CAUSE_EATING));
+                        this.exhaust(6);
+                    }
+                }
+            } else if (this.food <= 0) {
+                this.regenTimer += tickDiff;
+                if (this.regenTimer >= 80) {
+                    this.regenTimer = 0;
+                    if ((difficulty == Difficulty.NORMAL && health > 1) || difficulty == Difficulty.HARD) {
+                        this.player.attack(new EntityDamageEvent(this.player, EntityDamageEvent.DamageCause.HUNGER, 1));
+                    }
+                }
+            } else {
+                this.regenTimer = 0;
+            }
+        }
+
+        if (difficulty == Difficulty.PEACEFUL && this.foodTickTimer == 0) {
             if (this.food >= 18) {
                 if (health < player.getMaxHealth()) {
                     this.player.heal(new EntityRegainHealthEvent(this.player, 1, EntityRegainHealthEvent.CAUSE_EATING));

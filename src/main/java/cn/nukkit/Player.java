@@ -2912,7 +2912,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         cn.nukkit.nbt.tag.CompoundTag components = new cn.nukkit.nbt.tag.CompoundTag()
                 .putCompound("item_properties", properties)
                 .putCompound("minecraft:display_name", new cn.nukkit.nbt.tag.CompoundTag()
-                        .putString("value", cn.nukkit.item.PotionVariants.langKey(variant.getBaseIdentifier(), variant.getAux())));
+                        .putString("value", cn.nukkit.item.PotionVariants.displayName(variant.getBaseIdentifier(), variant.getAux())));
 
         if (drinkable) {
             components.putCompound("minecraft:food", new cn.nukkit.nbt.tag.CompoundTag()
