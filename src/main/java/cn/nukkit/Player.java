@@ -2790,9 +2790,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
     private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
         String icon = switch (original.getIdentifier()) {
-            case "minecraft:potion" -> "potion_bottle_drinkable";
-            case "minecraft:splash_potion" -> "potion_bottle_splash";
-            case "minecraft:lingering_potion" -> "potion_bottle_lingering";
+            case "minecraft:potion" -> "ruppim_potion";
+            case "minecraft:splash_potion" -> "ruppim_splash_potion";
+            case "minecraft:lingering_potion" -> "ruppim_lingering_potion";
             default -> null;
         };
         if (icon == null) {
@@ -2800,7 +2800,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
 
         boolean drinkable = original.getIdentifier().equals("minecraft:potion");
-        // Vanilla atlas keys (aux-indexed), no custom resource pack needed
+        // Icons: keys from the built-in pack, which points to the vanilla texture files
         cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
                 .putInt("max_stack_size", 64)
                 .putInt("creative_category", 3)
