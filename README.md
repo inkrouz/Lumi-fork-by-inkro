@@ -4,62 +4,41 @@
 <p align="center">High-performance extensible Minecraft Bedrock server software</p>
 
 ## Introduction
-Ruppim is a fork of Lumi, a server software which was made to introduce modern Minecraft new features and different improvements. Hard-forked from [Nukkit-MOT](https://github.com/MemoriesOfTime/Nukkit-MOT/).  
+**Ruppim** is a high-performance Minecraft Bedrock server core, developed and maintained by **[inkrouz](https://github.com/inkrouz)**.
+It is a fork of [Lumi](https://github.com/KoshakMineDEV/Lumi), which is itself hard-forked from [Nukkit-MOT](https://github.com/MemoriesOfTime/Nukkit-MOT/). Ruppim keeps Lumi's API and plugin compatibility and adds its own improvements on top.
 
-### What's new in Ruppim?
-1. Support for 1.20.0 – 1.26.60 version (you can set the minimum protocol in the config)
+### What Ruppim adds on top of Lumi
+1. **Stackable potions (up to 64)** with the original vanilla icons for every effect, including splash and lingering potions
+2. **Built-in mob AI** (wandering, fleeing, chasing, melee and ranged attacks, creeper explosions, jumping over obstacles) for vanilla mob types; plugin mobs, NPCs and bosses keep their own behaviour. Disable with `-Druppim.mobai=false`
+3. **Dupe and item-loss fixes**: multishot, loom, enchanting, brewing stand stacks, hoppers and inventory checks
+4. **Enchantment validation** on the server side
+5. Ruppim branding and its own build pipeline (GitHub Actions, builds published to Releases)
+
+### Inherited from Lumi
+1. Support for 1.20.0 – 1.26.60 clients (the minimum protocol can be set in the config)
 2. More vanilla features
-3. Custom Blocks support
-4. Custom Enchantments support
-5. Better AntiXray system
-6. Better API (effects, food, projectiles and etc.)
-7. Mixin support (changing any method) through [Ignite](https://github.com/KoshakMineDEV/ignite-lumi)
-8. Mobs support (with [MobPluginLumi](https://github.com/LuminiaDev/MobPluginLumi)), with WIP internal support for them
+3. Custom Blocks and Custom Enchantments support
+4. Better AntiXray system
+5. Better API (effects, food, projectiles and etc.)
+6. Mixin support (changing any method) through [Ignite](https://github.com/KoshakMineDEV/ignite-lumi)
+7. Mobs support (with [MobPluginLumi](https://github.com/LuminiaDev/MobPluginLumi))
 
 ### How to install?
-1. Install java 21 or higher (recommended is Azul Zulu 21)
-2. Download the .jar file from [Lumi Downloads](https://dl.lumi.su)
-3. Write a command to run: `java -jar Lumi-1.6.10.jar`
+1. Install Java 21 or higher (recommended is Azul Zulu 21)
+2. Download the latest `.jar` from the [Releases](https://github.com/inkrouz/Lumi-fork-by-inkro/releases) page of this repository
+3. Run it: `java -jar <downloaded-file>.jar`
 
 ### Plugin Development
-To develop your own plugin we recommend to check this [template](https://github.com/LuminiaDev/ExamplePlugin)
+Ruppim is API-compatible with Lumi, so Lumi plugins and the [ExamplePlugin template](https://github.com/LuminiaDev/ExamplePlugin) work as a starting point.
+
+### Building from source
+```
+./gradlew build
+```
+The GitHub Actions workflow `Build Project` builds the jar on every push.
 
 ### Need support?
-Go to our **[Discord Server](https://discord.gg/HkTnrkUySJ)**!
-
-## Maven
-Adding repo:
-```xml
-<repositories>
-    <repository>
-        <id>lumi-repository-snapshots</id>
-        <url>https://repo.lumi.su/snapshots</url>
-    </repository>
-</repositories>
-```
-
-Adding dependency:
-```xml
-<dependency>
-    <groupId>com.koshakmine</groupId>
-    <artifactId>Lumi</artifactId>
-    <version>1.6.10-SNAPSHOT</version>
-</dependency>
-```
-
-## Gradle
-Adding repo:
-```kts
-maven {
-    name = "lumiRepositorySnapshots"
-    url = uri("https://repo.lumi.su/snapshots")
-}
-```
-
-Adding dependency:
-```kts
-compileOnly("com.koshakmine:Lumi:1.6.10-SNAPSHOT")
-```
+Open an issue in this repository or contact the owner: [inkrouz](https://github.com/inkrouz).
 
 ## Credits
 [<img src="https://raw.githubusercontent.com/CloudburstMC/Nukkit/master/.github/images/logo.png" width="18"/>]() [Nukkit](https://github.com/CloudburstMC/Nukkit)  

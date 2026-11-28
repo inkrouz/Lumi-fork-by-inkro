@@ -1,6 +1,6 @@
 # Versioning and Release Policy
 
-Lumi uses two main branches for development and releases: `stable` and `dev`.
+Ruppim uses two main branches for development and releases: `stable` and `dev`.
 
 ## Branches
 
