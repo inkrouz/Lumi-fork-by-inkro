@@ -45,7 +45,15 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: |
+          set +e
+          ./gradlew build 2>&1 | tee build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            msg=$(grep -E "error:|What went wrong|FAILED" -A2 build.log | head -40)
+            echo "::error title=Build log::${msg//$'\n'/%0A}"
+          fi
+          exit $code
 
       - name: Prepare artifact name
         id: artifact_name
