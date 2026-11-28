@@ -273,7 +273,7 @@ public class BlockEntityBrewingStand extends BlockEntitySpawnable implements Inv
 
         for (int i = 0; i < 3; i++) {
             Item potion = inventory.getItem(i + 1);
-            if (potion.isNull()) {
+            if (potion.isNull() || potion.getCount() > 1) {
                 continue;
             }
 

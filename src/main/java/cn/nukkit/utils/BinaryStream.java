@@ -1362,11 +1362,11 @@ public class BinaryStream {
     }
 
     public byte[] getByteArray(int maxLength) {
-        int length = (int) this.getUnsignedVarInt();
-        checkArgument(this.isReadable(length),
+        long length = this.getUnsignedVarInt();
+        checkArgument(length >= 0 && length <= Integer.MAX_VALUE && this.isReadable((int) length),
                 "Tried to read %s bytes but only has %s readable", length, this.readableBytes());
         checkArgument(maxLength <= 0 || length <= maxLength, "Tried to read %s bytes but maximum is %s", length, maxLength);
-        return this.get(length);
+        return this.get((int) length);
     }
 
     public void putByteArray(byte[] b) {

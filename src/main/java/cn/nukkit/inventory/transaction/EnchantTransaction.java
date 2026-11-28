@@ -45,6 +45,9 @@ public class EnchantTransaction extends InventoryTransaction {
         }
         return inputItem != null && outputItem != null
                 && inputItem.equals(eInv.getInputSlot(), true, true)
+                && (inputItem.getId() == outputItem.getId() || (inputItem.getId() == Item.BOOK && outputItem.getId() == Item.ENCHANTED_BOOK))
+                && (inputItem.getCount() == outputItem.getCount()
+                        || (outputItem.getId() == Item.ENCHANTED_BOOK && outputItem.getCount() == 1))
                 && this.checkEnchantValid();
     }
 

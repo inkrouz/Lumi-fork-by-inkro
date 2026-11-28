@@ -248,7 +248,10 @@ public class BlockHopper extends BlockTransparentMeta implements Faceable, Block
             } else if (blockEntity instanceof InventoryHolder) {
                 Inventory inv = ((InventoryHolder) blockEntity).getInventory();
 
-                for (int i = 0; i < inv.getSize(); i++) {
+                boolean brewing = inv instanceof cn.nukkit.inventory.BrewingInventory;
+                int end = brewing ? 4 : inv.getSize();
+
+                for (int i = brewing ? 1 : 0; i < end; i++) {
                     Item item = inv.getItem(i);
 
                     if (!item.isNull()) {
