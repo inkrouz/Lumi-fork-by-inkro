@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Lumi Potion Icons",
+    "description": "Icons for stackable potions",
+    "uuid": "266e9511-a144-49d2-858a-5bed3b732699",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      60
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "94be1757-ccee-4b3c-8910-ea05ae34471d",
+      "version": [
+        1,
+        0,
+        0
+      ]
+    }
+  ]
+}

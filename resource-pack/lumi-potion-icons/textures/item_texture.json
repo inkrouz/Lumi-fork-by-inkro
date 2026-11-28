@@ -1,0 +1,15 @@
+{
+  "resource_pack_name": "lumi_potion_icons",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "lumi_potion": {
+      "textures": "textures/items/potion_bottle_drinkable"
+    },
+    "lumi_splash_potion": {
+      "textures": "textures/items/potion_bottle_splash"
+    },
+    "lumi_lingering_potion": {
+      "textures": "textures/items/potion_bottle_lingering"
+    }
+  }
+}

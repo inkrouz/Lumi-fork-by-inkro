@@ -2790,9 +2790,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
     private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
         String icon = switch (original.getIdentifier()) {
-            case "minecraft:potion" -> "potion_bottle_drinkable";
-            case "minecraft:splash_potion" -> "potion_bottle_splash";
-            case "minecraft:lingering_potion" -> "potion_bottle_lingering";
+            case "minecraft:potion" -> "lumi_potion";
+            case "minecraft:splash_potion" -> "lumi_splash_potion";
+            case "minecraft:lingering_potion" -> "lumi_lingering_potion";
             default -> null;
         };
         if (icon == null) {
