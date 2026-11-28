@@ -2800,14 +2800,14 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     props.load(in);
                 }
             } else {
-                props.setProperty("potion-mode", "pack");
+                props.setProperty("potion-mode", "frames");
                 try (java.io.OutputStream out = new java.io.FileOutputStream(file)) {
                     props.store(out, "Ruppim settings. potion-mode: pack | frames | legacy");
                 }
             }
-            return props.getProperty("potion-mode", "pack").trim().toLowerCase();
+            return props.getProperty("potion-mode", "frames").trim().toLowerCase();
         } catch (Exception e) {
-            return "pack";
+            return "frames";
         }
     }
 
@@ -2843,9 +2843,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
         boolean drinkable = original.getIdentifier().equals("minecraft:potion");
         int frames = switch (original.getIdentifier()) {
-            case "minecraft:potion" -> 31;
-            case "minecraft:splash_potion" -> 30;
-            default -> 21;
+            case "minecraft:potion", "minecraft:splash_potion" -> 47;
+            default -> 47;
         };
         // Icons: keys from the built-in pack, which points to the vanilla texture files
         cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
