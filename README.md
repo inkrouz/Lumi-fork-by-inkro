@@ -25,7 +25,7 @@
 
 ### Как установить?
 1. Установите Java 21 или новее (рекомендуется Azul Zulu 21)
-2. Скачайте последний `.jar` на странице [Releases](https://github.com/inkrouz/Lumi-fork-by-inkro/releases) этого репозитория
+2. Скачайте последний `.jar` на странице [Releases](https://github.com/inkrouz/Ruppim/releases) этого репозитория
 3. Запустите: `java -jar <скачанный-файл>.jar`
 
 ### Разработка плагинов
