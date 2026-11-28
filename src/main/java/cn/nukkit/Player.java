@@ -2788,6 +2788,34 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         infoPacket.mustAccept = this.server.getSettings().general().forceResources();
         this.dataPacket(infoPacket);
     }
+    private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
+        String icon = switch (original.getIdentifier()) {
+            case "minecraft:potion" -> "potion_bottle_drinkable";
+            case "minecraft:splash_potion" -> "potion_bottle_splash";
+            case "minecraft:lingering_potion" -> "potion_bottle_lingering";
+            default -> null;
+        };
+        if (icon == null) {
+            return original;
+        }
+
+        cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
+                .putInt("max_stack_size", 64)
+                .putCompound("minecraft:icon", new cn.nukkit.nbt.tag.CompoundTag()
+                        .putCompound("textures", new cn.nukkit.nbt.tag.CompoundTag().putString("default", icon)));
+        if (original.getIdentifier().equals("minecraft:potion")) {
+            properties.putInt("use_duration", 32).putInt("use_animation", 2);
+        }
+
+        cn.nukkit.nbt.tag.CompoundTag data = new cn.nukkit.nbt.tag.CompoundTag()
+                .putString("name", original.getIdentifier())
+                .putInt("id", original.getRuntimeId())
+                .putCompound("components", new cn.nukkit.nbt.tag.CompoundTag()
+                        .putCompound("item_properties", properties));
+
+        return new ItemComponentPacket.ItemDefinition(original.getIdentifier(), original.getRuntimeId(), true, 1, data);
+    }
+
     protected void completeLoginSequence() {
         if (this.loggedIn) {
             this.server.getLogger().debug("(BUG) Tried to call completeLoginSequence but player is already logged in");
@@ -2870,7 +2898,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 Collection<ItemComponentPacket.ItemDefinition> vanillaItems = RuntimeItems.getMapping(this.protocol).getVanillaItemDefinitions();
                 Set<Entry<String, CustomItemDefinition>> itemDefinitions = Registries.ITEM.getCustomItemDefinition().entrySet();
                 List<ItemComponentPacket.ItemDefinition> entries = new ArrayList<>(vanillaItems.size() + itemDefinitions.size());
-                entries.addAll(vanillaItems);
+                // EXPERIMENT: client-side stack size for potions
+                for (ItemComponentPacket.ItemDefinition definition : vanillaItems) {
+                    entries.add(stackablePotionDefinition(definition));
+                }
                 if (this.server.getSettings().features().enableExperimentMode() && !itemDefinitions.isEmpty()) {
                     for (Entry<String, CustomItemDefinition> entry : itemDefinitions) {
                         try {
