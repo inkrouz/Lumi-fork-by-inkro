@@ -201,7 +201,7 @@ public class SimpleMobAI {
         }
         for (int down = 0; down <= (chasing ? 4 : 3); down++) {
             Block block = mob.level.getBlock(x, y - down, z);
-            if (block.isLava() || block.getId() == Block.FIRE || block.getId() == Block.CACTUS) {
+            if (block instanceof cn.nukkit.block.BlockLava || block.getId() == Block.FIRE || block.getId() == Block.CACTUS) {
                 return false;
             }
             if (block.isWater() || !block.canPassThrough()) {
