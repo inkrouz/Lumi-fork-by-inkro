@@ -10,6 +10,8 @@ import cn.nukkit.item.Item;
 import cn.nukkit.item.ItemDye;
 import cn.nukkit.item.ItemID;
 import cn.nukkit.item.ItemNamespaceId;
+import cn.nukkit.nbt.tag.CompoundTag;
+import cn.nukkit.nbt.tag.ListTag;
 
 import java.util.List;
 
@@ -52,25 +54,59 @@ public class LoomTransaction extends InventoryTransaction {
             return false;
         }
 
-        if (!outputItem.hasCompoundTag()) {
-            return false;
-        }
-
-        int patternCount = outputItem.getNamedTag().getList("Patterns").size();
-        if (banner.getNamedTag() == null) {
-            return patternCount == 1;
-        }
-
-        if (patternCount > 6) {
-            return false;
-        }
-
         Item pattern = loomInventory.getPattern();
         if (pattern.getId() != 0 && (pattern.getId() != ItemID.BANNER_PATTERN && !pattern.getNamespaceId().equals(ItemNamespaceId.GUSTER_BANNER_PATTERN) && !pattern.getNamespaceId().equals(ItemNamespaceId.FLOW_BANNER_PATTERN))) {
             return false;
         }
 
-        return banner.getNamedTag().getList("Patterns").size() + 1 == patternCount;
+        CompoundTag bannerTag = snapshotNamedTag(banner);
+        if (bannerTag == null) {
+            bannerTag = new CompoundTag();
+        }
+        if (bannerTag.contains("Patterns") && !(bannerTag.get("Patterns") instanceof ListTag<?>)) {
+            return false;
+        }
+        ListTag<?> bannerPatterns = bannerTag.getList("Patterns");
+        bannerTag.remove("Patterns");
+
+        long outputCount = 0;
+        for (InventoryAction action : this.actions) {
+            if (!(action instanceof LoomItemAction)) {
+                continue;
+            }
+            Item output = action.getSourceItem();
+            if (output.getId() != Item.BANNER || output.isNull() || banner.getDamage() != output.getDamage()) {
+                return false;
+            }
+            outputCount += output.getCount();
+            if (outputCount > banner.getCount() || outputCount > dye.getCount()) {
+                return false;
+            }
+            CompoundTag outputTag = snapshotNamedTag(output);
+            if (outputTag == null || !(outputTag.get("Patterns") instanceof ListTag<?> outputPatterns)
+                    || outputPatterns.size() > 6 || bannerPatterns.size() + 1 != outputPatterns.size()) {
+                return false;
+            }
+            for (int i = 0; i < bannerPatterns.size(); i++) {
+                if (!bannerPatterns.get(i).equals(outputPatterns.get(i))) {
+                    return false;
+                }
+            }
+            outputTag.remove("Patterns");
+            if (!bannerTag.equals(outputTag)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static CompoundTag snapshotNamedTag(Item item) {
+        if (!item.hasCompoundTag()) {
+            return null;
+        }
+        CompoundTag snapshot = item.getNamedTag().copy();
+        snapshot.setName("");
+        return snapshot;
     }
 
     @Override

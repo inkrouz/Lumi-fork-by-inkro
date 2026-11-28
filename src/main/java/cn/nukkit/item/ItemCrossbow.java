@@ -179,6 +179,9 @@ public class ItemCrossbow extends ItemBow {
 
                     EntityArrow arrow = new EntityArrow(player.chunk, nbt, player, false);
                     arrow.piercing = penetrationLevel;
+                    if (launchCount > 1 && i != 0) {
+                        arrow.setPickupMode(EntityArrow.PICKUP_NONE);
+                    }
                     if (chargedItem.getDamage() != ItemArrow.NORMAL_ARROW) {
                         PotionType potion = PotionType.get(chargedItem.getDamage() - ItemArrow.TIPPED_ARROW);
                         if (potion != null) {
@@ -207,11 +210,11 @@ public class ItemCrossbow extends ItemBow {
                             } else {
                                 proj.spawnToAll();
                                 player.getLevel().addLevelSoundEvent(player, LevelSoundEventPacket.SOUND_CROSSBOW_SHOOT);
-                                this.useArrow(player);
                             }
                         }
                     }
                 }
+                this.useArrow(player);
             } else {
                 for (int i = 0; i < launchCount; i++) {
                     float angleOffset = launchCount == 1 ? 0 : i * MULTISHOT_ANGLE_DELTA - MULTISHOT_ANGLE_DELTA;
