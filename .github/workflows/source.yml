@@ -1,0 +1,39 @@
+name: Source Archive
+
+on:
+  push:
+    branches:
+      - stable
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pack source ZIP
+        run: |
+          mkdir -p out
+          zip -r out/ruppim-source.zip . \
+            -x ".git/*" \
+            -x "*/.git/*" \
+            -x ".gradle/*" \
+            -x "*/.gradle/*" \
+            -x "build/*" \
+            -x "*/build/*" \
+            -x "out/*" \
+            -x ".idea/*"
+          ls -lh out
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruppim-source-${{ github.ref_name }}
+          path: out/ruppim-source.zip

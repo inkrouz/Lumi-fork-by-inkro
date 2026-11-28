@@ -55,36 +55,20 @@ jobs:
           echo "name=ruppim-$SAFE_REF_NAME" >> $GITHUB_OUTPUT
           echo "safe=$SAFE_REF_NAME" >> $GITHUB_OUTPUT
 
-      - name: Pack ZIP files
+      - name: Collect jar
         run: |
           mkdir -p out
-
-          # 1) ZIP с исходниками (без .git, build и кэшей)
-          zip -r out/ruppim-source.zip . \
-            -x ".git/*" \
-            -x "*/.git/*" \
-            -x ".gradle/*" \
-            -x "*/.gradle/*" \
-            -x "build/*" \
-            -x "*/build/*" \
-            -x "out/*" \
-            -x ".idea/*"
-
-          # 2) ZIP с собранными jar-файлами
-          mkdir -p jars
-          find . -path "./out" -prune -o -path "*/build/libs/*.jar" -print -exec cp {} jars/ \;
-          zip -j out/ruppim-build.zip jars/*.jar
-
-          # 3) Отдельно сами jar
-          cp jars/*.jar out/
-
+          # Только готовый .jar (без -sources, -javadoc, -plain)
+          find . -path "./out" -prune -o -path "*/build/libs/*.jar" \
+            ! -name "*-sources.jar" ! -name "*-javadoc.jar" ! -name "*-plain.jar" \
+            -print -exec cp {} out/ \;
           ls -lh out
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact_name.outputs.name }}
-          path: out/*
+          path: out/*.jar
 
       - name: Publish to Releases
         if: github.event_name != 'pull_request'
@@ -93,7 +77,7 @@ jobs:
         run: |
           TAG="build-${{ steps.artifact_name.outputs.safe }}"
           gh release delete "$TAG" --cleanup-tag --yes || true
-          gh release create "$TAG" out/* \
+          gh release create "$TAG" out/*.jar \
             --target "${{ github.sha }}" \
             --title "Build (${{ steps.artifact_name.outputs.safe }})" \
-            --notes "Автосборка из коммита ${{ github.sha }}. ruppim-source.zip — исходники, ruppim-build.zip и .jar — сборка."
+            --notes "Автосборка из коммита ${{ github.sha }}. Внутри только .jar."

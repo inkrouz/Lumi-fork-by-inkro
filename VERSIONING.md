@@ -1,20 +1,20 @@
-# Versioning and Release Policy
+# Версионирование и политика релизов
 
-Ruppim uses two main branches for development and releases: `stable` and `dev`.
+Ruppim использует две основные ветки для разработки и релизов: `stable` и `dev`.
 
-## Branches
+## Ветки
 
 ### `stable`
 
-The `stable` branch contains release-ready code. Every push to this branch is treated as a stable release.
+Ветка `stable` содержит код, готовый к релизу. Каждый push в эту ветку считается стабильным релизом.
 
-Stable versions use a normal semantic version format:
+Стабильные версии используют обычный семантический формат:
 
 ```text
 MAJOR.MINOR.PATCH
 ```
 
-Examples:
+Примеры:
 
 ```text
 1.6.0
@@ -22,13 +22,13 @@ Examples:
 1.7.0
 ```
 
-Patch releases are used for regular minor fixes and small updates:
+Patch-релизы используются для обычных небольших исправлений и мелких обновлений:
 
 ```text
 1.6.0 -> 1.6.1
 ```
 
-Minor releases are used for larger project-wide updates:
+Minor-релизы используются для крупных обновлений всего проекта:
 
 ```text
 1.6.10 -> 1.7.0
@@ -36,68 +36,34 @@ Minor releases are used for larger project-wide updates:
 
 ### `dev`
 
-The `dev` branch contains the latest development version of the project.
+Ветка `dev` содержит последнюю версию, находящуюся в разработке.
 
-Versions built from `dev` always use the current project version with the `-SNAPSHOT` suffix:
-
-```text
-{current project version}-SNAPSHOT
-```
-
-Example:
+Сборки из `dev` всегда используют текущую версию проекта с суффиксом `-SNAPSHOT`:
 
 ```text
-1.6.0-SNAPSHOT
+{текущая версия проекта}-SNAPSHOT
 ```
 
-This means that `dev` builds are not considered final releases and may contain experimental or unfinished changes.
-
-## Maven Repositories
-
-The project is published to two Maven repositories depending on the source branch.
-
-### Releases repository
-
-Stable versions from the `stable` branch are published to:
-
-```text
-https://repo.lumi.su/releases
-```
-
-Only final release versions without the `-SNAPSHOT` suffix should be published here.
-
-Example:
-
-```text
-1.6.0
-1.6.1
-1.7.0
-```
-
-### Snapshots repository
-
-Development versions from the `dev` branch are published to:
-
-```text
-https://repo.lumi.su/snapshots
-```
-
-This repository always contains the most recent development builds with the `-SNAPSHOT` suffix.
-
-Example:
+Пример:
 
 ```text
 1.6.0-SNAPSHOT
 ```
+
+Это значит, что сборки из `dev` не являются финальными релизами и могут содержать экспериментальные или незавершённые изменения.
+
+## Maven-репозитории
+
+Maven-репозитории (`repo.lumi.su`) принадлежат проекту Lumi. Ruppim в них не публикуется. Готовые сборки Ruppim доступны только на странице GitHub Releases этого репозитория.
 
 ## GitHub Releases
 
-Every push to the `stable` branch creates a new GitHub Release for the current stable version.
+Каждый push в ветку `stable` или `dev` обновляет релиз `Build (<ветка>)`. В нём лежит только готовый `.jar`.
 
-Every push to either `stable` or `dev` also updates the `Latest Build` release. This release is used to provide the most recent build artifacts from the active development or stable branch.
+Архив с исходниками не входит в релиз. Он собирается отдельным workflow `Source Archive` и доступен как артефакт запуска.
 
-## Pull Requests
+## Pull Request'ы
 
-Pull requests with experimental changes, new features, or non-critical updates should target the `dev` branch.
+Pull request'ы с экспериментальными изменениями, новыми функциями или некритичными обновлениями должны направляться в ветку `dev`.
 
-Pull requests should target the `stable` branch only when they contain critical fixes that must be released as soon as possible.
+В ветку `stable` pull request'ы направляются только при критичных исправлениях, которые нужно выпустить как можно скорее.
