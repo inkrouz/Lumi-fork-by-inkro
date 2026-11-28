@@ -43,6 +43,11 @@ import java.util.*;
 public class InventoryTransactionProcessor extends DataPacketProcessor<InventoryTransactionPacket> {
     public static final InventoryTransactionProcessor INSTANCE = new InventoryTransactionProcessor();
 
+    private static boolean isDebugPotion(Item item) {
+        return item != null && (item.getId() == Item.POTION || item.getId() == Item.SPLASH_POTION
+                || item.getId() == Item.LINGERING_POTION);
+    }
+
     @Override
     public void handle(@NotNull PlayerHandle handle, @NotNull InventoryTransactionPacket packet) {
         var player = handle.player;
@@ -61,6 +66,18 @@ public class InventoryTransactionProcessor extends DataPacketProcessor<Inventory
         }
 
         InventoryTransactionPacket transactionPacket = packet;
+
+        // TEMP: potion stacking diagnostics
+        if (packet.actions != null && Arrays.stream(packet.actions).anyMatch(a -> a != null
+                && (isDebugPotion(a.oldItem) || isDebugPotion(a.newItem)))) {
+            log.info("[PotionDebug] {} type={}", player.getName(), packet.transactionType);
+            for (NetworkInventoryAction a : packet.actions) {
+                if (a != null) {
+                    log.info("[PotionDebug] source={} window={} slot={} old={} new={}",
+                            a.sourceType, a.windowId, a.inventorySlot, a.oldItem, a.newItem);
+                }
+            }
+        }
         // Nasty hack because the client won't change the right packet in survival when creating netherite stuff,
         // so we are emulating what Mojang should be sending
         if (player.getWindowById(Player.SMITHING_WINDOW_ID) instanceof SmithingInventory smithingInventory
