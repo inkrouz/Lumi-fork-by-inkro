@@ -55,6 +55,8 @@ public class RuntimeItemMapping {
 
     private byte[] itemPalette;
 
+    private final List<PotionVariant> potionVariants = new ArrayList<>();
+
     public RuntimeItemMapping(Map<String, MappingEntry> mappings, int protocolId) {
         this.protocolId = protocolId;
         String itemStatesFile = "gamedata/item/runtime/runtime_item_states_" + protocolId + ".json";
@@ -73,6 +75,7 @@ public class RuntimeItemMapping {
             }
         }
 
+        int maxRuntimeId = 0;
         for (JsonElement element : json) {
             if (!element.isJsonObject()) {
                 throw new IllegalStateException("Invalid entry");
@@ -80,6 +83,7 @@ public class RuntimeItemMapping {
             JsonObject entry = element.getAsJsonObject();
             String identifier = entry.get("name").getAsString();
             int runtimeId = entry.get("id").getAsInt();
+            maxRuntimeId = Math.max(maxRuntimeId, runtimeId);
             int version = entry.has("version") ? entry.get("version").getAsInt() : 0;
             boolean componentBased = entry.has("componentBased") && entry.get("componentBased").getAsBoolean();
             if (protocolId >= ProtocolInfo.v1_21_60) {
@@ -133,7 +137,57 @@ public class RuntimeItemMapping {
             this.registerItem(identifier, runtimeId, legacyId, damage, hasDamage);
         }
 
+        if (protocolId >= ProtocolInfo.v1_21_60 && PotionVariants.enabled()) {
+            this.registerPotionVariants(Math.max(maxRuntimeId + 1, 30000));
+        }
+
         this.generatePalette();
+    }
+
+    /**
+     * Every potion type gets its own network item (own runtime id, own icon, stack 64).
+     * The server keeps working with ordinary potions: id + damage are restored from the runtime id.
+     */
+    private void registerPotionVariants(int baseRuntimeId) {
+        int next = baseRuntimeId;
+        for (String base : new String[]{"minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion"}) {
+            LegacyEntry legacy = this.identifier2Legacy.get(base);
+            if (legacy == null) {
+                continue;
+            }
+            int legacyId = legacy.getLegacyId();
+            for (int aux = 0; aux < PotionVariants.COUNT; aux++) {
+                String identifier = PotionVariants.variantIdentifier(base, aux);
+                int runtimeId = next++;
+                this.registerItem(identifier, runtimeId, legacyId, aux, true);
+                // the server keeps seeing ordinary potions: network id -> original identifier
+                this.runtimeId2Name.put(runtimeId, base);
+                this.name2RuntimeId.removeInt(identifier);
+                this.identifier2Legacy.remove(identifier);
+                this.potionVariants.add(new PotionVariant(identifier, base, runtimeId, aux));
+            }
+        }
+    }
+
+    public List<PotionVariant> getPotionVariants() {
+        return this.potionVariants;
+    }
+
+    /** Damage value that goes over the wire next to the network id (0 for potion variants). */
+    public int wireDamage(Item item) {
+        RuntimeEntry entry = this.legacy2Runtime.get(this.getFullId(item.getId(), item.getDamage()));
+        if (entry != null && entry.isHasDamage() && entry.getIdentifier().startsWith(PotionVariants.PREFIX)) {
+            return 0;
+        }
+        return item.getDamage();
+    }
+
+    @Data
+    public static class PotionVariant {
+        private final String identifier;
+        private final String baseIdentifier;
+        private final int runtimeId;
+        private final int aux;
     }
 
     public Object2IntMap<String> getName2RuntimeId() {

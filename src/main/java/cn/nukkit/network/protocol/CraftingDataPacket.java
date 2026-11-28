@@ -265,11 +265,11 @@ public class CraftingDataPacket extends DataPacket {
         this.putUnsignedVarInt(this.brewingEntries.size());
         for (BrewingRecipe recipe : brewingEntries) {
             this.putVarInt(recipe.getInput().getNetworkId(protocol));
-            this.putVarInt(recipe.getInput().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getInput()));
             this.putVarInt(recipe.getIngredient().getNetworkId(protocol));
-            this.putVarInt(recipe.getIngredient().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getIngredient()));
             this.putVarInt(recipe.getResult().getNetworkId(protocol));
-            this.putVarInt(recipe.getResult().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getResult()));
         }
 
         this.putUnsignedVarInt(this.containerEntries.size());
@@ -345,11 +345,11 @@ public class CraftingDataPacket extends DataPacket {
         this.putUnsignedVarInt(this.brewingEntries.size());
         for (BrewingRecipe recipe : brewingEntries) {
             this.putVarInt(recipe.getInput().getNetworkId(protocol));
-            this.putVarInt(recipe.getInput().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getInput()));
             this.putVarInt(recipe.getIngredient().getNetworkId(protocol));
-            this.putVarInt(recipe.getIngredient().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getIngredient()));
             this.putVarInt(recipe.getResult().getNetworkId(protocol));
-            this.putVarInt(recipe.getResult().getDamage());
+            this.putVarInt(RuntimeItems.getMapping(protocol).wireDamage(recipe.getResult()));
         }
         this.putUnsignedVarInt(this.containerEntries.size());
         for (ContainerRecipe recipe : containerEntries) {

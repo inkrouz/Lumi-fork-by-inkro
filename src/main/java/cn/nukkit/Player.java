@@ -2811,7 +2811,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
     }
 
-    private static final String POTION_MODE = potionMode();
+    private static final String POTION_MODE = cn.nukkit.item.PotionVariants.mode();
 
     private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
         if (POTION_MODE.equals("legacy")) {
@@ -2830,6 +2830,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     return original;
                 }
             }
+        }
+        if (POTION_MODE.equals("variants")) {
+            return original; // vanilla definitions stay untouched, every potion type has its own item (see potionVariantDefinition)
         }
         String icon = switch (original.getIdentifier()) {
             case "minecraft:potion" -> "ruppim_potion";
@@ -2887,6 +2890,50 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 .putCompound("components", components);
 
         return new ItemComponentPacket.ItemDefinition(original.getIdentifier(), original.getRuntimeId(), true, 1, data);
+    }
+
+    private static ItemComponentPacket.ItemDefinition potionVariantDefinition(cn.nukkit.item.RuntimeItemMapping.PotionVariant variant) {
+        boolean drinkable = variant.getBaseIdentifier().equals("minecraft:potion");
+        cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
+                .putInt("max_stack_size", 64)
+                .putInt("creative_category", 3)
+                .putString("creative_group", "")
+                .putString("enchantable_slot", "none")
+                .putBoolean("allow_off_hand", false)
+                .putBoolean("can_destroy_in_creative", true)
+                .putBoolean("should_despawn", true)
+                .putFloat("mining_speed", 1.0f)
+                .putInt("use_duration", drinkable ? 32 : 0)
+                .putInt("use_animation", drinkable ? 2 : 0)
+                .putCompound("minecraft:icon", new cn.nukkit.nbt.tag.CompoundTag()
+                        .putCompound("textures", new cn.nukkit.nbt.tag.CompoundTag()
+                                .putString("default", cn.nukkit.item.PotionVariants.iconKey(variant.getBaseIdentifier(), variant.getAux()))));
+
+        cn.nukkit.nbt.tag.CompoundTag components = new cn.nukkit.nbt.tag.CompoundTag()
+                .putCompound("item_properties", properties)
+                .putCompound("minecraft:display_name", new cn.nukkit.nbt.tag.CompoundTag()
+                        .putString("value", cn.nukkit.item.PotionVariants.langKey(variant.getBaseIdentifier(), variant.getAux())));
+
+        if (drinkable) {
+            components.putCompound("minecraft:food", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putBoolean("can_always_eat", true)
+                    .putInt("nutrition", 0)
+                    .putFloat("saturation_modifier", 0f)
+                    .putCompound("using_converts_to", new cn.nukkit.nbt.tag.CompoundTag()));
+            components.putCompound("minecraft:use_animation", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putString("value", "drink"));
+            components.putCompound("minecraft:use_modifiers", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putBoolean("emit_vibrations", true)
+                    .putFloat("movement_modifier", 0.35f)
+                    .putFloat("use_duration", 1.6f));
+        }
+
+        cn.nukkit.nbt.tag.CompoundTag data = new cn.nukkit.nbt.tag.CompoundTag()
+                .putString("name", variant.getIdentifier())
+                .putInt("id", variant.getRuntimeId())
+                .putCompound("components", components);
+
+        return new ItemComponentPacket.ItemDefinition(variant.getIdentifier(), variant.getRuntimeId(), true, 1, data);
     }
 
     protected void completeLoginSequence() {
@@ -2974,6 +3021,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 // EXPERIMENT: client-side stack size for potions
                 for (ItemComponentPacket.ItemDefinition definition : vanillaItems) {
                     entries.add(stackablePotionDefinition(definition));
+                }
+                if (POTION_MODE.equals("variants")) {
+                    for (cn.nukkit.item.RuntimeItemMapping.PotionVariant variant : RuntimeItems.getMapping(this.protocol).getPotionVariants()) {
+                        entries.add(potionVariantDefinition(variant));
+                    }
                 }
                 if (this.server.getSettings().features().enableExperimentMode() && !itemDefinitions.isEmpty()) {
                     for (Entry<String, CustomItemDefinition> entry : itemDefinitions) {
