@@ -2788,54 +2788,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         infoPacket.mustAccept = this.server.getSettings().general().forceResources();
         this.dataPacket(infoPacket);
     }
-    private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
-        switch (original.getIdentifier()) {
-            case "minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion" -> {
-            }
-            default -> {
-                return original;
-            }
-        }
-
-        boolean drinkable = original.getIdentifier().equals("minecraft:potion");
-        // Same layout as the data-driven vanilla apple definition
-        cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
-                .putInt("max_stack_size", 64)
-                .putInt("frame_count", 1)
-                .putString("enchantable_slot", "none")
-                .putBoolean("allow_off_hand", false)
-                .putBoolean("can_destroy_in_creative", true)
-                .putBoolean("should_despawn", true)
-                .putFloat("mining_speed", 1.0f)
-                .putInt("use_duration", drinkable ? 32 : 0)
-                .putInt("use_animation", drinkable ? 2 : 0);
-        // No minecraft:icon on purpose: the client keeps its built-in vanilla potion icons (per effect)
-
-        cn.nukkit.nbt.tag.CompoundTag components = new cn.nukkit.nbt.tag.CompoundTag()
-                .putCompound("item_properties", properties);
-
-        if (drinkable) {
-            components.putCompound("minecraft:food", new cn.nukkit.nbt.tag.CompoundTag()
-                    .putBoolean("can_always_eat", true)
-                    .putInt("nutrition", 0)
-                    .putFloat("saturation_modifier", 0f)
-                    .putCompound("using_converts_to", new cn.nukkit.nbt.tag.CompoundTag()));
-            components.putCompound("minecraft:use_animation", new cn.nukkit.nbt.tag.CompoundTag()
-                    .putString("value", "drink"));
-            components.putCompound("minecraft:use_modifiers", new cn.nukkit.nbt.tag.CompoundTag()
-                    .putBoolean("emit_vibrations", true)
-                    .putFloat("movement_modifier", 0.35f)
-                    .putFloat("use_duration", 1.6f));
-        }
-
-        cn.nukkit.nbt.tag.CompoundTag data = new cn.nukkit.nbt.tag.CompoundTag()
-                .putString("name", original.getIdentifier())
-                .putInt("id", original.getRuntimeId())
-                .putCompound("components", components);
-
-        return new ItemComponentPacket.ItemDefinition(original.getIdentifier(), original.getRuntimeId(), true, 1, data);
-    }
-
     protected void completeLoginSequence() {
         if (this.loggedIn) {
             this.server.getLogger().debug("(BUG) Tried to call completeLoginSequence but player is already logged in");
@@ -2918,10 +2870,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 Collection<ItemComponentPacket.ItemDefinition> vanillaItems = RuntimeItems.getMapping(this.protocol).getVanillaItemDefinitions();
                 Set<Entry<String, CustomItemDefinition>> itemDefinitions = Registries.ITEM.getCustomItemDefinition().entrySet();
                 List<ItemComponentPacket.ItemDefinition> entries = new ArrayList<>(vanillaItems.size() + itemDefinitions.size());
-                // EXPERIMENT: client-side stack size for potions
-                for (ItemComponentPacket.ItemDefinition definition : vanillaItems) {
-                    entries.add(stackablePotionDefinition(definition));
-                }
+                // Vanilla definitions are sent untouched, so potions keep their original per-effect icons.
+                // Stack size 64 is enforced server-side (ItemPotion#getMaxStackSize).
+                entries.addAll(vanillaItems);
                 if (this.server.getSettings().features().enableExperimentMode() && !itemDefinitions.isEmpty()) {
                     for (Entry<String, CustomItemDefinition> entry : itemDefinitions) {
                         try {
