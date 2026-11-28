@@ -2789,8 +2789,9 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         this.dataPacket(infoPacket);
     }
     private static String potionMode() {
-        // legacy (default): keep the vanilla legacy item type, only change max stack size -> vanilla icons
-        // pack: data-driven item with icon keys from the built-in pack (single icon per type)
+        // pack (default): data-driven item with icon keys from the built-in pack, stack 64 works on the client
+        // frames: same as pack, but frame_count = number of icon frames (tries to pick the icon by potion type)
+        // legacy: keep the vanilla legacy item type; vanilla icons but client cannot move 64-stacks (not recommended)
         try {
             java.io.File file = new java.io.File(Nukkit.DATA_PATH, "ruppim.properties");
             java.util.Properties props = new java.util.Properties();
@@ -2799,14 +2800,14 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     props.load(in);
                 }
             } else {
-                props.setProperty("potion-mode", "legacy");
+                props.setProperty("potion-mode", "pack");
                 try (java.io.OutputStream out = new java.io.FileOutputStream(file)) {
-                    props.store(out, "Ruppim settings. potion-mode: legacy | pack");
+                    props.store(out, "Ruppim settings. potion-mode: pack | frames | legacy");
                 }
             }
-            return props.getProperty("potion-mode", "legacy").trim().toLowerCase();
+            return props.getProperty("potion-mode", "pack").trim().toLowerCase();
         } catch (Exception e) {
-            return "legacy";
+            return "pack";
         }
     }
 
@@ -2841,6 +2842,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
 
         boolean drinkable = original.getIdentifier().equals("minecraft:potion");
+        int frames = switch (original.getIdentifier()) {
+            case "minecraft:potion" -> 31;
+            case "minecraft:splash_potion" -> 30;
+            default -> 21;
+        };
         // Icons: keys from the built-in pack, which points to the vanilla texture files
         cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
                 .putInt("max_stack_size", 64)
@@ -2851,6 +2857,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 .putBoolean("can_destroy_in_creative", true)
                 .putBoolean("should_despawn", true)
                 .putFloat("mining_speed", 1.0f)
+                .putInt("frame_count", POTION_MODE.equals("frames") ? frames : 1)
                 .putInt("use_duration", drinkable ? 32 : 0)
                 .putInt("use_animation", drinkable ? 2 : 0)
                 .putCompound("minecraft:icon", new cn.nukkit.nbt.tag.CompoundTag()
