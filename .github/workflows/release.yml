@@ -62,7 +62,7 @@ jobs:
           tag_name: v${{ steps.project_version.outputs.version }}-${{ github.sha }}
           name: Release ${{ steps.project_version.outputs.version }}
           body: |
-            **This is the stable version of Lumi.**
+            **This is the stable version of Ruppim.**
 
             🔗 Commit: [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
 
