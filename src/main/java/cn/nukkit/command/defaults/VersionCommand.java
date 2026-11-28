@@ -40,6 +40,10 @@ public class VersionCommand extends VanillaCommand {
 
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+        if (!sender.isOp()) {
+            sender.sendMessage(TextFormat.RED + "У вас нет прав для использования этой команды.");
+            return true;
+        }
         if (args.length == 0 || !sender.hasPermission("nukkit.command.version.plugins")) {
             final String branch = Nukkit.getBranch();
             String minVer = Utils.getVersionByProtocol(ProtocolInfo.SUPPORTED_PROTOCOLS.get(0));

@@ -88,6 +88,7 @@ public class EnchantmentRegistry implements IRegistry<Identifier, Enchantment, E
         register(new EnchantmentMaceWindBurst());
         register(new EnchantmentMaceDensity());
         register(new EnchantmentMaceBreach());
+        registerCustom(new cn.nukkit.item.enchantment.EnchantmentDrill(), false);
     }
 
     @Override

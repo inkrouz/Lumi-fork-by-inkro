@@ -152,7 +152,7 @@ public class Server {
 
     private final TickingAreaManager tickingAreaManager;
 
-    private CustomEnchantmentDisplay customEnchantmentDisplay = new CustomEnchantmentDisplayStandard();
+    private CustomEnchantmentDisplay customEnchantmentDisplay = new cn.nukkit.item.enchantment.custom.CustomEnchantmentDisplayLore();
 
     private RCON rcon;
 
@@ -330,6 +330,13 @@ public class Server {
         Registries.ITEM_LEGACY.init();
         Registries.ITEM.init();
         Registries.CREATIVE_ITEM.init();
+        try {
+            cn.nukkit.item.Item drillBook = cn.nukkit.item.Item.get(cn.nukkit.item.Item.ENCHANTED_BOOK);
+            drillBook.addEnchantment(cn.nukkit.item.enchantment.Enchantment.get(cn.nukkit.item.enchantment.EnchantmentDrill.IDENTIFIER));
+            Registries.CREATIVE_ITEM.register(drillBook);
+        } catch (Exception e) {
+            log.error("Failed to add the Drill enchanted book to the creative inventory", e);
+        }
         EnumBiome.values();
         Attribute.init();
         GlobalBlockPalette.getOrCreateRuntimeId(ProtocolInfo.CURRENT_PROTOCOL, 0, 0);

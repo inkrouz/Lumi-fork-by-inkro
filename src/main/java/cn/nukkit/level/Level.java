@@ -2612,6 +2612,12 @@ public class Level implements ChunkManager, Metadatable {
             item = new ItemBlock(Block.get(BlockID.AIR), 0, 0);
         }
 
+        if (player != null && face != null && !DRILL_ACTIVE.get() && !item.isNull()
+                && (item.isPickaxe() || item.isShovel())
+                && item.hasCustomEnchantment(cn.nukkit.item.enchantment.EnchantmentDrill.IDENTIFIER)) {
+            item = this.useDrill(vector, face, item, player);
+        }
+
         if (this.gameRules.getBoolean(GameRule.DO_TILE_DROPS)) {
             //TODO: rework the way how the experience is dropped
             if (!isSilkTouch && player != null && (drops.length != 0 || target.getId() == BlockID.SCULK)) { // For example no xp from redstone if it's mined with stone pickaxe + trick for xp with sculk block
@@ -2627,6 +2633,54 @@ public class Level implements ChunkManager, Metadatable {
             }
         }
 
+        return item;
+    }
+
+    private static final ThreadLocal<Boolean> DRILL_ACTIVE = ThreadLocal.withInitial(() -> false);
+
+    /** "Drill" enchantment: additionally mines the blocks around the target in a 3x3 plane facing the player. */
+    private Item useDrill(Vector3 center, BlockFace face, Item item, Player player) {
+        DRILL_ACTIVE.set(true);
+        try {
+            int cx = center.getFloorX();
+            int cy = center.getFloorY();
+            int cz = center.getFloorZ();
+            for (int a = -1; a <= 1; a++) {
+                for (int b = -1; b <= 1; b++) {
+                    if (a == 0 && b == 0) {
+                        continue;
+                    }
+                    Vector3 pos = switch (face.getAxis()) {
+                        case Y -> new Vector3(cx + a, cy, cz + b);
+                        case X -> new Vector3(cx, cy + a, cz + b);
+                        default -> new Vector3(cx + a, cy + b, cz);
+                    };
+                    Block block = this.getBlock(pos);
+                    if (block.getId() == BlockID.AIR || block.getHardness() < 0 || block.canBeFlowedInto()) {
+                        continue;
+                    }
+                    int toolType = block.getToolType();
+                    if (!((item.isPickaxe() && toolType == cn.nukkit.item.ItemTool.TYPE_PICKAXE)
+                            || (item.isShovel() && toolType == cn.nukkit.item.ItemTool.TYPE_SHOVEL))) {
+                        continue;
+                    }
+                    player.lastBreak = -1;
+                    Item result = this.useBreakOn(pos, face, item, player, true);
+                    if (result != null) {
+                        item = result;
+                        if (item.isNull()) {
+                            break;
+                        }
+                    }
+                }
+                if (item.isNull()) {
+                    break;
+                }
+            }
+            player.lastBreak = System.currentTimeMillis();
+        } finally {
+            DRILL_ACTIVE.set(false);
+        }
         return item;
     }
 
