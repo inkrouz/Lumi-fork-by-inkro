@@ -360,8 +360,7 @@ public class Server {
 
         this.resourcePackManager = new ResourcePackManager(
                 new ZippedResourcePackLoader(new File(Nukkit.DATA_PATH, "resource_packs")),
-                new JarPluginResourcePackLoader(new File(this.pluginPath)),
-                new cn.nukkit.resourcepacks.loader.BuiltinResourcePackLoader()
+                new JarPluginResourcePackLoader(new File(this.pluginPath))
         );
 
         this.pluginManager = new PluginManager(this, this.commandMap);

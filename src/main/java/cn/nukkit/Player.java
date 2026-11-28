@@ -2789,14 +2789,12 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         this.dataPacket(infoPacket);
     }
     private static ItemComponentPacket.ItemDefinition stackablePotionDefinition(ItemComponentPacket.ItemDefinition original) {
-        String icon = switch (original.getIdentifier()) {
-            case "minecraft:potion" -> "ruppim_potion";
-            case "minecraft:splash_potion" -> "ruppim_splash_potion";
-            case "minecraft:lingering_potion" -> "ruppim_lingering_potion";
-            default -> null;
-        };
-        if (icon == null) {
-            return original;
+        switch (original.getIdentifier()) {
+            case "minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion" -> {
+            }
+            default -> {
+                return original;
+            }
         }
 
         boolean drinkable = original.getIdentifier().equals("minecraft:potion");
@@ -2804,22 +2802,17 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
                 .putInt("max_stack_size", 64)
                 .putInt("frame_count", 1)
-                .putInt("creative_category", 3)
-                .putString("creative_group", "")
                 .putString("enchantable_slot", "none")
                 .putBoolean("allow_off_hand", false)
                 .putBoolean("can_destroy_in_creative", true)
                 .putBoolean("should_despawn", true)
                 .putFloat("mining_speed", 1.0f)
                 .putInt("use_duration", drinkable ? 32 : 0)
-                .putInt("use_animation", drinkable ? 2 : 0)
-                .putCompound("minecraft:icon", new cn.nukkit.nbt.tag.CompoundTag()
-                        .putCompound("textures", new cn.nukkit.nbt.tag.CompoundTag().putString("default", icon)));
+                .putInt("use_animation", drinkable ? 2 : 0);
+        // No minecraft:icon on purpose: the client keeps its built-in vanilla potion icons (per effect)
 
         cn.nukkit.nbt.tag.CompoundTag components = new cn.nukkit.nbt.tag.CompoundTag()
-                .putCompound("item_properties", properties)
-                .putCompound("minecraft:display_name", new cn.nukkit.nbt.tag.CompoundTag()
-                        .putString("value", "Potion"));
+                .putCompound("item_properties", properties);
 
         if (drinkable) {
             components.putCompound("minecraft:food", new cn.nukkit.nbt.tag.CompoundTag()
