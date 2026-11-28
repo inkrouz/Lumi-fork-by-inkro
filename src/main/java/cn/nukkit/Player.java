@@ -2799,19 +2799,46 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             return original;
         }
 
+        boolean drinkable = original.getIdentifier().equals("minecraft:potion");
+        // Same layout as the data-driven vanilla apple definition
         cn.nukkit.nbt.tag.CompoundTag properties = new cn.nukkit.nbt.tag.CompoundTag()
                 .putInt("max_stack_size", 64)
+                .putInt("frame_count", 1)
+                .putInt("creative_category", 3)
+                .putString("creative_group", "")
+                .putString("enchantable_slot", "none")
+                .putBoolean("allow_off_hand", false)
+                .putBoolean("can_destroy_in_creative", true)
+                .putBoolean("should_despawn", true)
+                .putFloat("mining_speed", 1.0f)
+                .putInt("use_duration", drinkable ? 32 : 0)
+                .putInt("use_animation", drinkable ? 2 : 0)
                 .putCompound("minecraft:icon", new cn.nukkit.nbt.tag.CompoundTag()
                         .putCompound("textures", new cn.nukkit.nbt.tag.CompoundTag().putString("default", icon)));
-        if (original.getIdentifier().equals("minecraft:potion")) {
-            properties.putInt("use_duration", 32).putInt("use_animation", 2);
+
+        cn.nukkit.nbt.tag.CompoundTag components = new cn.nukkit.nbt.tag.CompoundTag()
+                .putCompound("item_properties", properties)
+                .putCompound("minecraft:display_name", new cn.nukkit.nbt.tag.CompoundTag()
+                        .putString("value", "Potion"));
+
+        if (drinkable) {
+            components.putCompound("minecraft:food", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putBoolean("can_always_eat", true)
+                    .putInt("nutrition", 0)
+                    .putFloat("saturation_modifier", 0f)
+                    .putCompound("using_converts_to", new cn.nukkit.nbt.tag.CompoundTag()));
+            components.putCompound("minecraft:use_animation", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putString("value", "drink"));
+            components.putCompound("minecraft:use_modifiers", new cn.nukkit.nbt.tag.CompoundTag()
+                    .putBoolean("emit_vibrations", true)
+                    .putFloat("movement_modifier", 0.35f)
+                    .putFloat("use_duration", 1.6f));
         }
 
         cn.nukkit.nbt.tag.CompoundTag data = new cn.nukkit.nbt.tag.CompoundTag()
                 .putString("name", original.getIdentifier())
                 .putInt("id", original.getRuntimeId())
-                .putCompound("components", new cn.nukkit.nbt.tag.CompoundTag()
-                        .putCompound("item_properties", properties));
+                .putCompound("components", components);
 
         return new ItemComponentPacket.ItemDefinition(original.getIdentifier(), original.getRuntimeId(), true, 1, data);
     }
