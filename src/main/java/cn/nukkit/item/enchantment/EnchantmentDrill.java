@@ -25,11 +25,6 @@ public class EnchantmentDrill extends Enchantment {
         return item.isPickaxe() || item.isShovel();
     }
 
-    @Override
-    public boolean isCompatibleWith(Enchantment enchantment) {
-        return super.isCompatibleWith(enchantment);
-    }
-
     public String getDescription() {
         return DESCRIPTION;
     }

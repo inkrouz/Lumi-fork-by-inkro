@@ -332,7 +332,13 @@ public class Server {
         Registries.CREATIVE_ITEM.init();
         try {
             cn.nukkit.item.Item drillBook = cn.nukkit.item.Item.get(cn.nukkit.item.Item.ENCHANTED_BOOK);
-            drillBook.addEnchantment(cn.nukkit.item.enchantment.Enchantment.get(cn.nukkit.item.enchantment.EnchantmentDrill.IDENTIFIER));
+            cn.nukkit.nbt.tag.ListTag<cn.nukkit.nbt.tag.CompoundTag> drillList = new cn.nukkit.nbt.tag.ListTag<>();
+            drillList.add(new cn.nukkit.nbt.tag.CompoundTag()
+                    .putString("id", cn.nukkit.item.enchantment.EnchantmentDrill.IDENTIFIER)
+                    .putShort("lvl", 1));
+            drillBook.setNamedTag(new cn.nukkit.nbt.tag.CompoundTag().putList("custom_ench", drillList));
+            new cn.nukkit.item.enchantment.custom.CustomEnchantmentDisplayLore().apply(drillBook,
+                    java.util.List.of(cn.nukkit.item.enchantment.Enchantment.get(cn.nukkit.item.enchantment.EnchantmentDrill.IDENTIFIER)));
             Registries.CREATIVE_ITEM.register(drillBook);
         } catch (Exception e) {
             log.error("Failed to add the Drill enchanted book to the creative inventory", e);
